@@ -1,5 +1,7 @@
 # MHR:SB Qurious Crafting OCR Web
 
+[アプリを開く (Demo)](https://flet-app-mhrsb-ocr.fly.dev/)
+
 モンスターハンターライズ：サンブレイク（MHR:SB）の「傀異錬成（Qurious Crafting）」の結果をOCRで読み取るFlet Webアプリです。
 
 ## 機能
@@ -11,7 +13,7 @@
 
 1. **リポジトリをクローン**
    ```bash
-   git clone https://github.com
+   git clone https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web.git
    cd mhrsb-qurious-crafting-ocr-web
 
 2. **依存ライブラリのインストール**
@@ -23,5 +25,5 @@
     flet run src/main.py
 
 ## 使用技術
-Flet (Python-based Flutter framework)
-Python 3.x
+- **Flet** (Python-based Flutter framework)
+- **Python 3.x**
