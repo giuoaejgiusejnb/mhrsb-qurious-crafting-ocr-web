@@ -1,31 +1,21 @@
-name: Cleanup Old Gists (1 hour)
-on:
-  schedule:
-    - cron: '*/15 * * * *'  # 15分おきに自動実行
-  workflow_dispatch:        # 手動実行用
-
-jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete Gists older than 1 hour
-        env:
-          GH_TOKEN: ${{ secrets.GIST_PAT }}
         run: |
-          # 1時間前のUnixタイムスタンプを取得
           THRESHOLD=$(date -d "1 hour ago" +%s)
+          echo "判定基準時刻 (Unix): $THRESHOLD"
 
-          # Gist一覧を取得して1件ずつチェック
+          # 一覧が取得できているかデバッグ表示
+          gh gist list --limit 10
+
           gh gist list --limit 1000 --json id,updatedAt | jq -c '.[]' | while read -r gist; do
             ID=$(echo $gist | jq -r '.id')
             UPDATED_AT=$(echo $gist | jq -r '.updatedAt')
-            
-            # 更新日時をタイムスタンプに変換
             UPDATED_TS=$(date -d "$UPDATED_AT" +%s)
 
-            # 1時間以上経過していれば削除
+            echo "チェック中: $ID (更新日: $UPDATED_AT / TS: $UPDATED_TS)"
+
             if [ "$UPDATED_TS" -lt "$THRESHOLD" ]; then
-              echo "Deleting Gist: $ID (Updated: $UPDATED_AT)"
-              gh gist delete "$ID"
+              echo "==> 削除実行対象です: $ID"
+              gh gist delete "$ID" --yes
+            else
+              echo "==> まだ1時間経っていないためスキップします"
             fi
           done
