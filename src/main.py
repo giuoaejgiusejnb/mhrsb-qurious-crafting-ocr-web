@@ -122,3 +122,7 @@ def health():
     return {"status": "ok"}
 
 app.mount("/", flet_fastapi.app(main))
+
+# flet run されたときに実行（この場合，fastapiは無効になる）
+if __name__ == "__main__": 
+    ft.run(main)
