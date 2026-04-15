@@ -34,7 +34,7 @@ jobs:
                   if updated_at < threshold:
                       gist_id = gist["id"]
                       # 削除実行
-                      del_res = requests.delete(f"https://api.github.com/gists{gist_id}", headers=headers)
+                      del_res = requests.delete(f"https://api.github.com/gists/{gist_id}", headers=headers)
                       if del_res.status_code == 204:
                           print(f"Deleted: {gist_id}")
           EOF
