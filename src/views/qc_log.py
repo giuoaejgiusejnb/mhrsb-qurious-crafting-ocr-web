@@ -136,7 +136,7 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
             qc_logs_list.controls.append(
                 ft.Container(
                     content=ft.Text(f"{day}日 合計: {day_sum}", weight="bold", size=18),
-                    bgcolor=ft.Colors.BLUE_GREY_50,
+                    bgcolor=ft.Colors.BLUE_GREY_200,
                     padding=10,
                     border_radius=5,
                 )
