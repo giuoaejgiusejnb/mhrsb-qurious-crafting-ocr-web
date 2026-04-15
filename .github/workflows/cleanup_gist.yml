@@ -12,23 +12,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GIST_PAT }}
         run: |
+          # 1時間前の時刻をUnixタイムに変換
           THRESHOLD=$(date -d "1 hour ago" +%s)
-          echo "判定基準時刻 (Unix): $THRESHOLD"
+          echo "判定基準 (Unix): $THRESHOLD"
 
-          # 一覧が取得できているかデバッグ表示
-          gh gist list --limit 10
-
-          gh gist list --limit 1000 --json id,updatedAt | jq -c '.[]' | while read -r gist; do
-            ID=$(echo $gist | jq -r '.id')
-            UPDATED_AT=$(echo $gist | jq -r '.updatedAt')
-            UPDATED_TS=$(date -d "$UPDATED_AT" +%s)
-
-            echo "チェック中: $ID (更新日: $UPDATED_AT / TS: $UPDATED_TS)"
+          # --json を使わず、テキスト出力からID(1列目)と時間(5列目)を抜き出す
+          # gh gist list の出力形式: ID  Description  Files  Visibility  UpdatedAt
+          gh gist list --limit 100 | while read -r ID DESC FILES VIS UPDATED; do
+            # 更新日時をUnixタイムに変換
+            UPDATED_TS=$(date -d "$UPDATED" +%s)
+            
+            echo "チェック中: $ID (更新日: $UPDATED / TS: $UPDATED_TS)"
 
             if [ "$UPDATED_TS" -lt "$THRESHOLD" ]; then
-              echo "==> 削除実行対象です: $ID"
+              echo "==> 削除します: $ID"
               gh gist delete "$ID" --yes
             else
-              echo "==> まだ1時間経っていないためスキップします"
+              echo "==> スキップ: まだ1時間以内です"
             fi
           done
