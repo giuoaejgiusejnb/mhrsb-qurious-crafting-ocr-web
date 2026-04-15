@@ -14,6 +14,8 @@ from constants import (
 from .linked_sentence import LinkedSentence
 
 def get_open_colab_sentence(user_name: str, github_token: str, settings_ref: firestore.CollectionReference, settings_name: str, input_zip_file: str):
+    colab_url, set_colab_url = ft.use_state("")
+
     if settings_name:
         data = (
             settings_ref
@@ -27,7 +29,7 @@ def get_open_colab_sentence(user_name: str, github_token: str, settings_ref: fir
         data = {}
     desired_skills = data.get(FIELD_SKILLS)
 
-    async def open_in_colab(e):
+    async def create_colab_url(e):
         if desired_skills is None or input_zip_file == "":
             e.page.show_dialog(
                 ft.SnackBar(
@@ -83,8 +85,8 @@ def get_open_colab_sentence(user_name: str, github_token: str, settings_ref: fir
             # usernameは省略してもIDが合っていればリダイレクトされます
 
             # Colab 用の URL を生成
-            colab_url = f"https://colab.research.google.com/gist/{gist_username}/{gist_id}/{gist_filename}"
-            await ft.UrlLauncher().launch_url(colab_url)
+            url = f"https://colab.research.google.com/gist/{gist_username}/{gist_id}/{gist_filename}"
+            set_colab_url(url)
 
     def open_how_to_enable_gpu_dialog(e):
         e.page.show_dialog(ft.AlertDialog(
@@ -113,15 +115,20 @@ def get_open_colab_sentence(user_name: str, github_token: str, settings_ref: fir
         ))
 
     open_colab_sentence = LinkedSentence([
-        ("これをクリック", open_in_colab),
-        "して",
         ("GPUを有効", open_how_to_enable_gpu_dialog),
         "にしてから",
         ("すべてのセルを実行", open_how_to_run_cells_dialog),
-        "してください．",
-        "10分ほど経ったら一番下のところに結果が出ます",
+        "してください．"
     ])
     open_colab_sentence.scroll=ft.ScrollMode.ADAPTIVE
     open_colab_sentence.expand=True
 
-    return open_colab_sentence
+    return ft.Column(
+        controls=[
+            ft.Text("url作成ボタンを押すと出てくるurlにアクセスしてください（urlは一時間で削除されます）．"),
+            open_colab_sentence,
+            ft.Text("10分ほど経ったら一番下のところに結果が出ます．"),
+            ft.Button("urlを作成", on_click=create_colab_url),
+            ft.TextButton(colab_url, url=colab_url)
+        ]
+    )
