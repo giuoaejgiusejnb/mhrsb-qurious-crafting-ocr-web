@@ -1,3 +1,16 @@
+name: Cleanup Old Gists
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Gists older than 1 hour
+        env:
+          GH_TOKEN: ${{ secrets.GIST_PAT }}
         run: |
           THRESHOLD=$(date -d "1 hour ago" +%s)
           echo "判定基準時刻 (Unix): $THRESHOLD"
