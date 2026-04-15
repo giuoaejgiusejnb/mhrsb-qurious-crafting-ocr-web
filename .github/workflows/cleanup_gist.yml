@@ -1,0 +1,43 @@
+name: Cleanup Old Gists
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Gists using Python
+        env:
+          GH_TOKEN: ${{ secrets.GIST_PAT }}
+        run: |
+          python3 - <<EOF
+          import os
+          import requests
+          from datetime import datetime, timezone, timedelta
+
+          token = os.getenv("GH_TOKEN")
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Accept": "application/vnd.github+json"
+          }
+          
+          # UTCで「現在の1時間前」を確実に計算
+          threshold = datetime.now(timezone.utc) - timedelta(hours=1)
+          print(f"Checking gists updated before: {threshold}")
+
+          res = requests.get("https://api.github.com/gists", headers=headers)
+          if res.status_code == 200:
+              for gist in res.json():
+                  # 相手もUTCとして読み込む
+                  updated_at = datetime.fromisoformat(gist["updated_at"].replace("Z", "+00:00"))
+                  
+                  if updated_at < threshold:
+                      gist_id = gist["id"]
+                      del_res = requests.delete(f"https://api.github.com/gists/{gist_id}", headers=headers)
+                      if del_res.status_code == 204:
+                          print(f"Deleted: {gist_id} (Updated at: {updated_at})")
+                  else:
+                      print(f"Skipped: {gist_id} (Updated at: {updated_at} is too recent)")
+          EOF
