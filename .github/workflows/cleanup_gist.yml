@@ -1,24 +1,31 @@
-name: Cleanup Old Gists
+name: Cleanup Old Gists (1 hour)
 on:
   schedule:
-    - cron: '0 0 * * *'  # 毎日日本時間 午前9時 (UTC 0時) に実行
-  workflow_dispatch:      # 手動で実行したい時用
+    - cron: '*/15 * * * *'  # 15分おきに自動実行
+  workflow_dispatch:        # 手動実行用
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete Old Gists
+      - name: Delete Gists older than 1 hour
         env:
           GH_TOKEN: ${{ secrets.GIST_PAT }}
         run: |
-          # 1日以上前のGist IDを取得して削除
-          # ghコマンド（GitHub CLI）を使うとページネーションも自動で処理してくれます
-          gh gist list --limit 1000 | while read -r id updated visibility description; do
-            # 更新日時が1日以上前か判定（簡易的に前日の日付と比較）
-            THRESHOLD=$(date -d "1 day ago" +%Y-%m-%d)
-            if [[ "$updated" < "$THRESHOLD" ]]; then
-              echo "Deleting Gist: $id (Updated at $updated)"
-              gh gist delete "$id"
+          # 1時間前のUnixタイムスタンプを取得
+          THRESHOLD=$(date -d "1 hour ago" +%s)
+
+          # Gist一覧を取得して1件ずつチェック
+          gh gist list --limit 1000 --json id,updatedAt | jq -c '.[]' | while read -r gist; do
+            ID=$(echo $gist | jq -r '.id')
+            UPDATED_AT=$(echo $gist | jq -r '.updatedAt')
+            
+            # 更新日時をタイムスタンプに変換
+            UPDATED_TS=$(date -d "$UPDATED_AT" +%s)
+
+            # 1時間以上経過していれば削除
+            if [ "$UPDATED_TS" -lt "$THRESHOLD" ]; then
+              echo "Deleting Gist: $ID (Updated: $UPDATED_AT)"
+              gh gist delete "$ID"
             fi
           done
