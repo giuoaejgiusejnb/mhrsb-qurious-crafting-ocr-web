@@ -1,0 +1,24 @@
+name: Cleanup Old Gists
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 毎日日本時間 午前9時 (UTC 0時) に実行
+  workflow_dispatch:      # 手動で実行したい時用
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Old Gists
+        env:
+          GH_TOKEN: ${{ secrets.GIST_PAT }}
+        run: |
+          # 1日以上前のGist IDを取得して削除
+          # ghコマンド（GitHub CLI）を使うとページネーションも自動で処理してくれます
+          gh gist list --limit 1000 | while read -r id updated visibility description; do
+            # 更新日時が1日以上前か判定（簡易的に前日の日付と比較）
+            THRESHOLD=$(date -d "1 day ago" +%Y-%m-%d)
+            if [[ "$updated" < "$THRESHOLD" ]]; then
+              echo "Deleting Gist: $id (Updated at $updated)"
+              gh gist delete "$id"
+            fi
+          done
