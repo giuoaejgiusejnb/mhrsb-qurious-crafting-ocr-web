@@ -1,8 +1,8 @@
 name: Cleanup Old Gists
 on:
   schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
+    - cron: '*/15 * * * *'  # 15分おきに実行
+  workflow_dispatch:        # 手動実行ボタンを表示
 
 jobs:
   cleanup:
@@ -17,27 +17,58 @@ jobs:
           import requests
           from datetime import datetime, timezone, timedelta
 
+          # 設定
           token = os.getenv("GH_TOKEN")
+          if not token:
+              print("Error: GH_TOKEN (GIST_PAT) is not set in Secrets.")
+              exit(1)
+
           headers = {
               "Authorization": f"Bearer {token}",
-              "Accept": "application/vnd.github+json"
+              "Accept": "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28"
           }
           
-          # UTCで「現在の1時間前」を確実に計算
+          # 1時間前を判定基準にする
           threshold = datetime.now(timezone.utc) - timedelta(hours=1)
-          print(f"Checking gists updated before: {threshold}")
+          print(f"基準時刻 (1時間前): {threshold}")
 
-          res = requests.get("https://api.github.com/gists", headers=headers)
-          if res.status_code == 200:
-              for gist in res.json():
-                  # 相手もUTCとして読み込む
+          # 全件取得のためのページネーション処理
+          page = 1
+          total_deleted = 0
+          
+          while True:
+              url = f"https://api.github.com/gists?page={page}"
+              res = requests.get(url, headers=headers)
+              
+              if res.status_code != 200:
+                  print(f"一覧取得エラー: {res.status_code}")
+                  break
+              
+              gists = res.json()
+              if not gists or not isinstance(gists, list):
+                  break
+                  
+              print(f"ページ {page} を確認中... ({len(gists)}件)")
+              
+              for gist in gists:
+                  # 更新日時をUTCで取得
                   updated_at = datetime.fromisoformat(gist["updated_at"].replace("Z", "+00:00"))
                   
                   if updated_at < threshold:
                       gist_id = gist["id"]
+                      # 削除リクエスト
                       del_res = requests.delete(f"https://api.github.com/gists/{gist_id}", headers=headers)
                       if del_res.status_code == 204:
-                          print(f"Deleted: {gist_id} (Updated at: {updated_at})")
-                  else:
-                      print(f"Skipped: {gist_id} (Updated at: {updated_at} is too recent)")
+                          print(f"削除成功: {gist_id} (更新日時: {updated_at})")
+                          total_deleted += 1
+                      else:
+                          print(f"削除失敗: {gist_id} (Status: {del_res.status_code})")
+              
+              # 100件未満なら次のページはないので終了
+              if len(gists) < 100:
+                  break
+              page += 1
+
+          print(f"完了: 合計 {total_deleted} 件のGistを削除しました。")
           EOF
