@@ -27,14 +27,14 @@ jobs:
           threshold = datetime.now(timezone.utc) - timedelta(hours=1)
           
           # Gist一覧取得
-          res = requests.get("https://github.com", headers=headers)
+          res = requests.get("https://api.github.com/gists", headers=headers)
           if res.status_code == 200:
               for gist in res.json():
                   updated_at = datetime.fromisoformat(gist["updated_at"].replace("Z", "+00:00"))
                   if updated_at < threshold:
                       gist_id = gist["id"]
                       # 削除実行
-                      del_res = requests.delete(f"https://github.com{gist_id}", headers=headers)
+                      del_res = requests.delete(f"https://api.github.com/gists{gist_id}", headers=headers)
                       if del_res.status_code == 204:
                           print(f"Deleted: {gist_id}")
           EOF
