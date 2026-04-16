@@ -1,5 +1,6 @@
 import flet as ft
 import calendar
+import pytz
 from collections import defaultdict
 from firebase_admin import firestore
 from constants import (
@@ -54,7 +55,11 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
     # monthly_dataを作成
     for doc in qc_log_docs:
         data = doc.to_dict()
-        dt = data.get(FIELD_EXECUTED_AT)
+        #  Firestore に datetime オブジェクトを保存すると、プログラム側で JST（日本時間）にしていても、
+        # データベース内では自動的に UTC（世界標準時）に変換して保存される．
+        # なのでjstに変換し直す
+        jst = pytz.timezone('Asia/Tokyo')
+        dt = data.get(FIELD_EXECUTED_AT).astimezone(jst)
         count = data.get(FIELD_QC_COUNT, 0)
 
         if dt:
