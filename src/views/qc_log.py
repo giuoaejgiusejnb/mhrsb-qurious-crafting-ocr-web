@@ -1,3 +1,5 @@
+# 練成履歴を表示するコンポーネント
+
 import flet as ft
 import calendar
 import pytz
@@ -7,9 +9,12 @@ from constants import (
     HOME,
     COL_QC_LOGS,
     COL_USERS,
+    COL_USER_SETTINGS,
+    DOC_ID_CURRENT,
     FIELD_QC_COUNT,
     FIELD_EXECUTED_AT,
-    FIELD_CREATED_AT_STR
+    FIELD_CREATED_AT_STR,
+    FIELD_IS_QC_LOG_PUBLIC
 )
 
 @ft.component
@@ -27,7 +32,17 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
 
     # dropdownにユーザーを追加
     for doc in db.collection(COL_USERS).stream():
-        dropdown.options.append(ft.dropdown.Option(doc.id))
+        user_settings = (
+            db.collection(COL_USERS)
+            .document(doc.id)
+            .collection(COL_USER_SETTINGS)
+            .document(DOC_ID_CURRENT)
+            .get().to_dict() or {}
+        )
+
+        # 自分自身の履歴か，一般公開可にしている履歴のみ表示
+        if doc.id == user_name or user_settings.get(FIELD_IS_QC_LOG_PUBLIC, True):
+            dropdown.options.append(ft.dropdown.Option(doc.id))
 
     # 履歴が表示されるコントロール
     qc_logs_list = ft.ListView(
