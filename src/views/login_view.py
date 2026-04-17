@@ -78,6 +78,7 @@ def LoginView(page: ft.Page, set_route: callable, set_user_name: callable, auth:
         except Exception as ex:
             # すでに登録されている場合やパスワードが短い場合などにエラー
             set_error_str(f"登録失敗: {ex}")
+            return
 
         # 登録成功後、そのままログイン状態にしてダッシュボードへ
         await login(name_input, password)
