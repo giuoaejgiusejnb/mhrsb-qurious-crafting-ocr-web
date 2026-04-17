@@ -48,7 +48,7 @@ def Root(page: ft.Page, auth: Auth, db: firestore.client, github_token: str) -> 
         if page.route == HOME:
             return HomeView(page, set_route, set_user_name, user_name)
         elif page.route == SETTINGS:
-            return SettingsView(page, set_route)
+            return SettingsView(page, set_route, user_name, db)
         elif page.route == ROUTE_SKILLS_SETTINGS:
             return SkillSettingsView(page, set_route, user_name, db)
         elif page.route == ROUTE_OCR:
