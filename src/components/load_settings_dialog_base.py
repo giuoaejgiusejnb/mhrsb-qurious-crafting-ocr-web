@@ -44,7 +44,9 @@ class LoadSettingsDialogBase(ft.AlertDialog):
                         tooltip="詳細を表示",
                         icon=ft.Icons.INFO_OUTLINE,
                         # こうしないとクロージャの仕様（遅延評価）で，settings_nameがループの最後のものに固定される
-                        on_click= lambda e: e.page.show_dialog(DetailDialog(settings_name, settings_ref))
+                        on_click=partial(lambda settings_name, settings_ref, e
+                                        : e.page.show_dialog(DetailDialog(settings_name, settings_ref)),
+                                        settings_name, settings_ref)
                     ),
 
                     # 削除ボタン（is_delete_button_visibleがTrueのときのみ表示）
