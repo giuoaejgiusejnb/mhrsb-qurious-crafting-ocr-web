@@ -12,7 +12,7 @@ import pyrebase
 import os
 import pytz
 import json
-import requests
+import httpx
 import flet.fastapi as flet_fastapi
 from fastapi import FastAPI, Body
 from views import Root
@@ -30,6 +30,17 @@ from constants import (
 app = FastAPI()
 
 async def main(page: ft.Page):
+    # ロード画面
+    loading_screen = ft.Column(
+        controls=[
+            ft.ProgressRing(),
+            ft.Text("Gistデータを取得中...", size=20)
+        ]
+    )
+    
+    # 画面にロード中表示を出す
+    page.add(loading_screen)
+
     # --- Firebase Admin SDK (サーバー権限) の初期化 ---
     if not firebase_admin._apps:
         cert_json = os.getenv("FIREBASE_KEY")
@@ -68,12 +79,13 @@ async def main(page: ft.Page):
         "Accept": "application/vnd.github+json"
     }
 
-    res = requests.get(GIST_URL, headers=headers)
+    async with httpx.AsyncClient() as client:
+        res = await client.get(GIST_URL, headers=headers)
     if res.status_code == 401:
-        page.add("トークンの有効期限が切れているか，無効なトークンです．アプリ作成者に連絡してください")
+        page.add(ft.Text("トークンの有効期限が切れているか，無効なトークンです．アプリ作成者に連絡してください"))
         return
     elif res.status_code != 200:
-        page.add(f"エラーが発生しました: {res.status_code}")
+        page.add(ft.Text(f"エラーが発生しました．  res.status_code:{res.status_code}"))
         return
 
     exp_str = res.headers.get("github-authentication-token-expiration")
@@ -93,6 +105,7 @@ async def main(page: ft.Page):
             )
         )
 
+    page.clean()
     page.render(lambda: Root(page, auth, db, github_token))
 
 @app.post(ENDPOINT_QC_LOG)
