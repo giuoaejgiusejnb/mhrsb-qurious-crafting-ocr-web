@@ -14,6 +14,7 @@ from .db_keys import (
     COL_DESIRED_SKILLS_SETTINGS,
     COL_QC_LOGS,
     COL_PREV_OCR_SETTINGS,
+    COL_USER_SETTINGS,
     DOC_ID_CURRENT,
     FIELD_SKILLS,
     FIELD_SKILLS_SETTINGS_NAME,
@@ -21,7 +22,8 @@ from .db_keys import (
     FIELD_EXECUTED_AT,
     FIELD_QC_COUNT,
     FIELD_CREATED_AT_STR,
-    FIELD_USER_ACTIVE
+    FIELD_USER_ACTIVE,
+    FIELD_IS_QC_LOG_PUBLIC
 )
 from .paths import (
     BASE_DIR,
