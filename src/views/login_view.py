@@ -6,8 +6,11 @@ from pyrebase.pyrebase import Auth
 from constants import (
     HOME,
     KEY_USER_NAME,
+    DOC_ID_CURRENT,
     COL_USERS,
+    COL_USER_SETTINGS,
     FIELD_USER_ACTIVE,
+    FIELD_IS_QC_LOG_PUBLIC,
     GUEST_USER_NAME,
     GUEST_PASSWORD
 )
@@ -69,6 +72,9 @@ def LoginView(page: ft.Page, set_route: callable, set_user_name: callable, auth:
             user = auth.create_user_with_email_and_password(dummy_email, password)
             # firestoreにユーザーを登録（ドキュメントにフィールドが存在しないと，.stream()で取得できない）
             db.collection(COL_USERS).document(name_input).set({FIELD_USER_ACTIVE: True})
+            # 練成履歴公開可の初期設定をtrueに設定
+            db.collection(COL_USERS).document(name_input).collection(COL_USER_SETTINGS).document(DOC_ID_CURRENT).set(
+                {FIELD_IS_QC_LOG_PUBLIC: True})
         except Exception as ex:
             # すでに登録されている場合やパスワードが短い場合などにエラー
             set_error_str(f"登録失敗: {ex}")
