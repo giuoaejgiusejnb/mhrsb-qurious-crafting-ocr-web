@@ -1,7 +1,7 @@
 import flet as ft
 from firebase_admin import firestore
 import nbformat
-import requests
+import httpx
 import re
 from constants import (
     OCR_NOTEBOOK_PATH,
@@ -72,7 +72,8 @@ def get_open_colab_sentence(user_name: str, github_token: str, settings_ref: fir
             }
         }
 
-        res = requests.post(GIST_URL, headers=headers, json=payload)
+        async with httpx.AsyncClient() as client:
+            res = await client.post(GIST_URL, headers=headers, json=payload)
 
         # Colabで開く
         if res.status_code == 201:
