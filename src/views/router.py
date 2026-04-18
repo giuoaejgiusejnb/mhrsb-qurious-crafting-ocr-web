@@ -54,7 +54,9 @@ def Root(page: ft.Page, auth: Auth, db: firestore.client, github_token: str) -> 
         elif page.route == ROUTE_OCR:
             return OCRView(page, set_route, user_name, db, github_token)
         elif page.route == ROUTE_QC_LOG:
-            return QCLog(page, set_route, user_name, db)
+            # ft.Containerで包まないとQCLog内のft.use_effectが動かない
+            # 理由はわからん！！！！！！！
+            return ft.Container(content=QCLog(page, set_route, user_name, db), expand=True)
         # ルートにマッチしない場合は404ページを表示
         else:
             return NotFoundView(page, set_route) 
