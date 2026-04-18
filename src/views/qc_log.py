@@ -32,7 +32,7 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
     # ．．．らしい
 
     # --- データ取得・集計処理 ---
-    async def fetch_data(user: str):
+    async def fetch_data():
         set_is_loading(True)
 
         # 重い処理（Firestore通信 + 集計）を別スレッドで実行
@@ -54,7 +54,7 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
             # 2. 履歴の取得と集集計
             qc_log_docs = (
                 db.collection(COL_USERS)
-                .document(user)
+                .document(target_user)
                 .collection(COL_QC_LOGS)
                 .order_by(FIELD_EXECUTED_AT, direction=firestore.Query.DESCENDING)
                 .stream()
@@ -151,9 +151,8 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
         set_logs_controls(new_controls)
         set_is_loading(False)
 
-    # --- 初回実行のトリガー ---
-    if is_loading and not logs_controls:
-        page.run_task(fetch_data, target_user)
+    # --- 初回起動時とtarget_userが変更されるごとに表示するデータを変更 ---
+    ft.use_effect(lambda: page.run_task(fetch_data), [target_user])
 
     # --- UI ---
     if is_loading:
@@ -172,7 +171,7 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
                 label="表示するユーザーを選択",
                 value=target_user,
                 options=dropdown_options,
-                on_select=lambda e:(set_target_user(e.data), page.run_task(fetch_data, e.data)),
+                on_select=lambda e: set_target_user(e.data),
                 width=300,
             ),
             ft.Column(controls=logs_controls) 
