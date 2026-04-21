@@ -20,8 +20,8 @@ class SettingsEditDialog(LoadSettingsDialogBase):
         self.on_load(new_skills)
 
         # 二つのダイアログを消す
-        self.overwrite_confirm_dlg.open = False
-        self.open = False
+        self.page.pop_dialog()
+        self.page.pop_dialog()
 
         # スナックバーを表示
         snack_bar = ft.SnackBar(
@@ -29,7 +29,4 @@ class SettingsEditDialog(LoadSettingsDialogBase):
             behavior=ft.SnackBarBehavior.FLOATING,
             margin=ft.Margin.only(bottom=100, left=20, right=20),
         )
-        self.page.overlay.append(snack_bar)
-        snack_bar.open = True
-        
-        self.page.update()
+        self.page.show_dialog(snack_bar)

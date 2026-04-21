@@ -28,7 +28,7 @@ class DetailDialog(ft.AlertDialog):
                                 on_click=lambda _: None # これを設定しないと色が変更できない
                             ) for skill in skills
                         ],
-                        wrap=True,         # これで自動改行されます
+                        wrap=True,         # これで自動改行される
                         spacing=10,        # チップ同士の横の間隔
                         run_spacing=10,    # 改行された時の縦の間隔
                         scroll=ft.ScrollMode.ADAPTIVE,

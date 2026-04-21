@@ -17,12 +17,10 @@ from components import (
 @ft.component
 def SkillSettingsView(page : ft.Page, set_route: callable, user_name: str, db: firestore.client) -> ft.Column:
     selected_skills, set_selected_skills = ft.use_state(set())
-    # チェックボックスの参照を保持するリスト
-    checkbox_refs = []
 
     # 保存ボタンを押したときの処理（保存ダイアログを表示）
     def show_save_settings_dialog(e):
-        dialog = SaveSettingsDialog(checkbox_refs, user_name, db)
+        dialog = SaveSettingsDialog(user_name=user_name, db=db, selected_skills=selected_skills)
         page.show_dialog(dialog)
 
     # 読み込みボタンを押したときの処理（読み込みダイアログを表示）
@@ -30,18 +28,14 @@ def SkillSettingsView(page : ft.Page, set_route: callable, user_name: str, db: f
         dialog = SettingsEditDialog(user_name=user_name, db=db, on_load=set_selected_skills)
         page.show_dialog(dialog)
 
+    # スキルのチェックがオンオフされるごとに，selected_skillsも更新
     def toggle_skill(e, skill_name):
-        # 現在のセットをコピー（Fletの状態更新は、新しいオブジェクトを渡す必要があるため）
-        new_skills = set(selected_skills)
         is_checked = e.control.value
     
         if is_checked:
-            new_skills.add(skill_name)
+            selected_skills.add(skill_name)
         else:
-            new_skills.discard(skill_name)
-    
-        # 状態を更新（これによってCheckboxのvalueが自動で再評価される）
-        set_selected_skills(new_skills)
+            selected_skills.discard(skill_name)
 
     # データを元にUI要素を生成
     content_list = [ft.Text("スキル選択（翔と蝕はどちらも選択しないかどちらも選択するかを推奨）", size=25, weight="bold")]
@@ -53,11 +47,8 @@ def SkillSettingsView(page : ft.Page, set_route: callable, user_name: str, db: f
         # チェックボックス
         checkboxes = []
         for skill in skills:
-            r = ft.Ref[ft.Checkbox]()
-            checkbox_refs.append(r)
             checkboxes.append(ft.Checkbox(
                 value=skill in selected_skills,
-                ref=r, 
                 label=skill, 
                 col={"xs": 6, "sm": 4, "md": 3},
                 on_change=partial(toggle_skill, skill_name=skill)
