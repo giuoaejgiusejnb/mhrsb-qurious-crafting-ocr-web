@@ -100,7 +100,6 @@ def SkillSettingsView(page : ft.Page, set_route: callable, user_name: str, db: f
 
     return ft.Column(
         controls=[
-            ft.Button("ホームに戻る", on_click=lambda _: set_route(HOME)),
             ft.Row(action_buttons, alignment=ft.MainAxisAlignment.CENTER),
             skill_form_controls
         ],

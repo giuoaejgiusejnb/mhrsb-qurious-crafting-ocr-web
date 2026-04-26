@@ -36,7 +36,6 @@ def SettingsView(page: ft.Page, set_route: callable, user_name: str, db: firesto
 
     return ft.Column(
         controls=[
-            ft.Button("ホームへ", on_click=lambda _: set_route(HOME)),
             share_toggle
         ],
     )

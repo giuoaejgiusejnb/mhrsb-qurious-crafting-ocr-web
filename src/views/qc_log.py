@@ -166,7 +166,6 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
 
     return ft.Column(
         controls=[
-            ft.Button("ホームに戻る", on_click=lambda _: set_route(HOME)),
             ft.Dropdown(
                 label="表示するユーザーを選択",
                 value=target_user,

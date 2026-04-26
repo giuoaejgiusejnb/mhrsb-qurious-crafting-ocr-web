@@ -139,7 +139,6 @@ def OCRView(page: ft.Page, set_route: callable, user_name: str, db: firestore.cl
 
     return ft.Column(
         controls=[
-            ft.Button("ホームに戻る", on_click=lambda _: set_route(HOME)),
             ft.Container(
                 content=content,
                 alignment=ft.Alignment.CENTER, # これで画面の真ん中にドスンと配置される
