@@ -35,7 +35,11 @@ from .routes import (
     ROUTE_SKILLS_SETTINGS,
     ROUTE_QC_LOG ,
     SETTINGS,
-    HOME
+    HOME,
+    PAGE_TITLES,
+    UI_TITLES,
+    DEFAULT_PAGE_TITLE,
+    DEFAULT_UI_TITLE
 )
 from .skills import (
     SKILL_MASTER_LIST,
