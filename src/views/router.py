@@ -10,8 +10,11 @@ from constants import (
     LOGIN,
     ROUTE_QC_LOG,
     SETTINGS,
-    APP_NAME,
-    KEY_USER_NAME
+    KEY_USER_NAME,
+    PAGE_TITLES,
+    UI_TITLES,
+    DEFAULT_UI_TITLE,
+    DEFAULT_PAGE_TITLE
 )
 from views import (
     HomeView,
@@ -39,7 +42,19 @@ def Root(page: ft.Page, auth: Auth, db: firestore.client, github_token: str) -> 
         return ft.Column([ft.ProgressRing()])
 
     page.route = route
-    page.title  = page.route.lstrip("/") + f" ({APP_NAME})"
+    page.title  = PAGE_TITLES.get(route, DEFAULT_PAGE_TITLE)
+    page.appbar = ft.AppBar(
+        leading=ft.IconButton(
+            icon=ft.Icons.ARROW_BACK,
+            tooltip="ホームへ戻る",
+            on_click=lambda _: set_route(HOME),
+            disabled= (route == HOME)
+        ),
+        leading_width=40,
+        title=UI_TITLES.get(route, DEFAULT_UI_TITLE),
+        center_title=True,
+        bgcolor=ft.Colors.BLUE_GREY_400,
+    )
 
     if not user_name:  # ログインしていない場合はログイン画面へ
         set_route(LOGIN)
@@ -59,4 +74,4 @@ def Root(page: ft.Page, auth: Auth, db: firestore.client, github_token: str) -> 
             return ft.Container(content=QCLog(page, set_route, user_name, db), expand=True)
         # ルートにマッチしない場合は404ページを表示
         else:
-            return NotFoundView(page, set_route) 
+            return NotFoundView()
