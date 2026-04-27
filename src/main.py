@@ -27,19 +27,16 @@ from constants import (
     PL_KEY_USER_NAME,
     GIST_URL
 )
+from components import LoadingScreen
+from models import TypedPage
+
 app = FastAPI()
 
 async def main(page: ft.Page):
-    # ロード画面
-    loading_screen = ft.Column(
-        controls=[
-            ft.ProgressRing(),
-            ft.Text("Gistデータを取得中...", size=20)
-        ]
-    )
-    
+    page: TypedPage = page
+
     # 画面にロード中表示を出す
-    page.add(loading_screen)
+    page.add(LoadingScreen(msg="Gistデータを取得中..."))
 
     # --- Firebase Admin SDK (サーバー権限) の初期化 ---
     if not firebase_admin._apps:
@@ -105,7 +102,29 @@ async def main(page: ft.Page):
             )
         )
 
+    # ロード画面消去
     page.clean()
+
+    # スクロールバーの定義
+    page.theme = ft.Theme(
+        scrollbar_theme=ft.ScrollbarTheme(
+            track_color={ # バーが通る道の部分の色
+                ft.ControlState.HOVERED: ft.Colors.BLUE_GREY_50, # マウスを乗せた時の色
+                ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT, # 通常時の色
+            },
+            thumb_color={ # 動くバーの部分の色
+                ft.ControlState.HOVERED: ft.Colors.BLUE_GREY_400,
+                ft.ControlState.DEFAULT: ft.Colors.BLUE_GREY_200,
+            },
+            thickness=10,        # バーの太さ（デフォルトは短い）
+            radius=5,            # 角の丸み
+            main_axis_margin=5,
+            cross_axis_margin=5,
+            interactive=True,    # ドラッグ可能にする
+        )
+    )
+
+    # ページ遷移
     page.render(lambda: Root(page, auth, db, github_token))
 
 @app.post(ENDPOINT_QC_LOG)
