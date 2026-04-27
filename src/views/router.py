@@ -14,7 +14,12 @@ from constants import (
     PAGE_TITLES,
     UI_TITLES,
     DEFAULT_UI_TITLE,
-    DEFAULT_PAGE_TITLE
+    DEFAULT_PAGE_TITLE,
+)
+from components import LoadingScreen
+from models import (
+    AppState,
+    TypedPage
 )
 from views import (
     HomeView,
@@ -27,20 +32,40 @@ from views import (
 )
 
 @ft.component
-def Root(page: ft.Page, auth: Auth, db: firestore.client, github_token: str) -> ft.Column:
-    # ユーザーネーム (None: 確認中, "": 未ログイン, それ以外の文字列: ログイン済み)
-    user_name, set_user_name = ft.use_state(None)
+def Root(page: TypedPage, auth: Auth, db: firestore.firestore.Client, github_token: str) -> ft.Control:
+    is_loading, set_is_loading = ft.use_state(True)
     route, set_route = ft.use_state(HOME)
 
-    async def check_login()-> None:
-        name = await ft.SharedPreferences().get(KEY_USER_NAME)
-        set_user_name(name if name else "")
+    # page.app_stateに登録
+    if not hasattr(page, "app_state"):
+        page.app_state = AppState(
+            auth=auth,
+            db=db,
+            github_token=github_token,
+            is_logged_in=False,
+            set_route=set_route,
+            user_name=""
+        )
 
+    # 前回のログインデータが残っているかチェック
+    async def check_login()-> None:
+        # 前回ログインしたユーザー
+        name = await ft.SharedPreferences().get(KEY_USER_NAME)
+        if name:
+            await page.app_state.login(name)
+        set_is_loading(False)
+
+    # 初回起動時にのみ前回のログインチェック
     ft.use_effect(check_login, [])
     # ログイン状態の確認が終わるまでは待機表示
-    if user_name is None:
-        return ft.Column([ft.ProgressRing()])
+    if is_loading:
+        return LoadingScreen(msg="ログイン状態を確認中")
 
+    # ログインしていないならログインページに移動
+    if not page.app_state.is_authenticated and route != LOGIN:
+        page.app_state.set_route(LOGIN)
+
+    #--- UI構築 ---
     page.route = route
     page.title  = PAGE_TITLES.get(route, DEFAULT_PAGE_TITLE)
     page.appbar = ft.AppBar(
@@ -55,23 +80,14 @@ def Root(page: ft.Page, auth: Auth, db: firestore.client, github_token: str) -> 
         center_title=True,
         bgcolor=ft.Colors.BLUE_GREY_400,
     )
+    return ROUTES_MAP.get(route, NotFoundView)(page)
 
-    if not user_name:  # ログインしていない場合はログイン画面へ
-        set_route(LOGIN)
-        return LoginView(page, set_route, set_user_name, auth, db)
-    else:
-        if page.route == HOME:
-            return HomeView(page, set_route, set_user_name, user_name)
-        elif page.route == SETTINGS:
-            return SettingsView(page, set_route, user_name, db)
-        elif page.route == ROUTE_SKILLS_SETTINGS:
-            return SkillSettingsView(page, set_route, user_name, db)
-        elif page.route == ROUTE_OCR:
-            return OCRView(page, set_route, user_name, db, github_token)
-        elif page.route == ROUTE_QC_LOG:
-            # ft.Containerで包まないとQCLog内のft.use_effectが動かない
-            # 理由はわからん！！！！！！！
-            return ft.Container(content=QCLog(page, set_route, user_name, db), expand=True)
-        # ルートにマッチしない場合は404ページを表示
-        else:
-            return NotFoundView()
+# ルートとView関数のマッピング
+ROUTES_MAP = {
+    HOME: HomeView,
+    LOGIN: LoginView,
+    ROUTE_OCR: OCRView,
+    ROUTE_SKILLS_SETTINGS: SkillSettingsView,
+    SETTINGS: SettingsView,
+    ROUTE_QC_LOG: QCLog,
+}
