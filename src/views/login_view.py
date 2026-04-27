@@ -4,18 +4,18 @@ import flet as ft
 from firebase_admin import firestore
 from pyrebase.pyrebase import Auth
 from constants import (
-    HOME,
-    KEY_USER_NAME,
     DOC_ID_CURRENT,
     COL_USERS,
     COL_USER_SETTINGS,
     FIELD_USER_ACTIVE,
     FIELD_IS_QC_LOG_PUBLIC,
     GUEST_USER_NAME,
-    GUEST_PASSWORD
+    GUEST_PASSWORD,
 )
+from models import TypedPage
+
 @ft.component
-def LoginView(page: ft.Page, set_route: callable, set_user_name: callable, auth: Auth,  db: firestore.client) -> ft.Column:
+def LoginView(page: TypedPage) -> ft.Control:
     name_input, set_name_input = ft.use_state("")
     password, set_password = ft.use_state("")
     error_str, set_error_str = ft.use_state("")
@@ -34,6 +34,8 @@ def LoginView(page: ft.Page, set_route: callable, set_user_name: callable, auth:
         on_change=lambda e: set_password(e.control.value)
     )
     error_text = ft.Text(error_str, color="red")
+    auth = page.app_state.auth
+    db = page.app_state.db
 
     async def login(name: str, pwd: str)-> None:
         encoded_name = base64.urlsafe_b64encode(name.encode()).decode().rstrip("=")
@@ -42,9 +44,7 @@ def LoginView(page: ft.Page, set_route: callable, set_user_name: callable, auth:
         try:
             # ユーザーログイン実行
             user = auth.sign_in_with_email_and_password(dummy_email, pwd)
-            await ft.SharedPreferences().set(KEY_USER_NAME, name)
-            set_user_name(name)
-            set_route(HOME)
+            await page.app_state.login(name=name)
         except:
             set_error_str("ログインに失敗しました。メールアドレスとパスワードを確認してください。")
 

@@ -16,9 +16,14 @@ from constants import (
     FIELD_SKILLS_SETTINGS_NAME,
     FIELD_INPUT_ZIP_FILE
 )
+from models import TypedPage
 
 @ft.component
-def OCRView(page: ft.Page, set_route: callable, user_name: str, db: firestore.client, github_token: str) -> ft.Column:
+def OCRView(page: TypedPage) -> ft.Control:
+    user_name = page.app_state.user_name
+    db = page.app_state.db
+    github_token = page.app_state.github_token
+
     data = (db.collection(COL_USERS)
     .document(user_name)
     .collection(COL_PREV_OCR_SETTINGS)

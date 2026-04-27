@@ -1,17 +1,20 @@
 # ユーザー設定を変更するコンポーネント
 
 import flet as ft
+from firebase_admin import firestore
 from constants import (
-    HOME,
     COL_USERS,
     COL_USER_SETTINGS,
     DOC_ID_CURRENT,
     FIELD_IS_QC_LOG_PUBLIC
 )
-from firebase_admin import firestore
+from models import TypedPage
 
 @ft.component
-def SettingsView(page: ft.Page, set_route: callable, user_name: str, db: firestore.client) -> ft.Column:
+def SettingsView(page: TypedPage) -> ft.Control:
+    user_name = page.app_state.user_name
+    db = page.app_state.db
+
     user_settings_ref = (
         db.collection(COL_USERS)
         .document(user_name)

@@ -3,20 +3,21 @@
 import flet as ft
 from constants import(
     SETTINGS,
-    KEY_USER_NAME,
     ROUTE_SKILLS_SETTINGS,
     ROUTE_OCR,
     ROUTE_QC_LOG,
-    GUEST_USER_NAME
 )
+from models import TypedPage
 
 @ft.component
-def HomeView(page: ft.Page, set_route: callable, set_user_name: callable, user_name: str) -> ft.Column:
+def HomeView(page: TypedPage) -> ft.Control:
     async def logout_click(e: ft.ControlEvent):
-        await ft.SharedPreferences().remove(KEY_USER_NAME)
-        set_user_name("")
+        await page.app_state.logout()
 
-    is_guest = user_name == GUEST_USER_NAME
+    user_name = page.app_state.user_name
+    is_guest = page.app_state.is_guest
+    set_route = page.app_state.set_route
+
     return ft.Column(
         controls=[
             ft.Text(f"こんにちは、 {user_name} さん"),

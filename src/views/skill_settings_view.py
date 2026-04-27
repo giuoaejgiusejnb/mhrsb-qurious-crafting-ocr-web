@@ -12,10 +12,13 @@ from components import (
     SaveSettingsDialog,
     SettingsEditDialog,
 )
+from models import TypedPage
 
 # --- 欲しいスキル設定ページのコンポーネント ---
 @ft.component
-def SkillSettingsView(page : ft.Page, set_route: callable, user_name: str, db: firestore.client) -> ft.Column:
+def SkillSettingsView(page : TypedPage) -> ft.Control:
+    user_name = page.app_state.user_name
+    db = page.app_state.db
     selected_skills, set_selected_skills = ft.use_state(set())
 
     # 保存ボタンを押したときの処理（保存ダイアログを表示）

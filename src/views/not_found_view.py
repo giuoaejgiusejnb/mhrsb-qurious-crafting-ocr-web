@@ -1,9 +1,10 @@
 import flet as ft
-from constants.routes import HOME
+from models import TypedPage
 
 # --- ページが見つからなかったときのコンポーネント ---
 @ft.component
-def NotFoundView() -> ft.Column:
+def NotFoundView(page: TypedPage) -> ft.Control:
+
     return ft.Column([
         ft.Text("404 - ページが見つかりません", size=40, color="red", weight="bold"),
         ft.Text("お探しのページは削除されたか、URLが間違っている可能性があります。"),
