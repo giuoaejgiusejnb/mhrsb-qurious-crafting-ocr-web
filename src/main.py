@@ -88,19 +88,9 @@ async def main(page: ft.Page):
     exp_str = res.headers.get("github-authentication-token-expiration")
     exp_date = datetime.strptime(exp_str, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
-            
-    # 残り日数を計算
+
+    # gistの有効期限の残り日数を計算
     remaining_days = (exp_date - now).days
-    if remaining_days <= 30:
-        expiration_warning_text = f"このwebアプリは{exp_str}に使用できなくなります．アプリ作成者に連絡して有効期限を延ばしてください"
-        page.show_dialog(ft.SnackBar(
-            ft.Text(expiration_warning_text),
-            persist=True,
-            action="ok",
-            behavior=ft.SnackBarBehavior.FLOATING,
-            margin=ft.Margin.only(bottom=300, left=20, right=20)
-            )
-        )
 
     # ロード画面消去
     page.clean()
@@ -125,7 +115,16 @@ async def main(page: ft.Page):
     )
 
     # ページ遷移
-    page.render(lambda: Root(page, auth, db, github_token))
+    page.render(
+        lambda: Root(
+            page=page,
+            auth=auth,
+            db=db,
+            github_token=github_token,
+            remaining_days=remaining_days,
+            exp_str=exp_str
+        )
+    )
 
 @app.post(ENDPOINT_QC_LOG)
 async def receive_data(payload: dict = Body(...)):

@@ -23,7 +23,8 @@ from .db_keys import (
     FIELD_QC_COUNT,
     FIELD_CREATED_AT_STR,
     FIELD_USER_ACTIVE,
-    FIELD_IS_QC_LOG_PUBLIC
+    FIELD_IS_QC_LOG_PUBLIC,
+    FIELD_ALERT_DAYS
 )
 from .paths import (
     BASE_DIR,
@@ -40,6 +41,10 @@ from .routes import (
     UI_TITLES,
     DEFAULT_PAGE_TITLE,
     DEFAULT_UI_TITLE
+)
+from .settings import (
+    DEFAULT_ALERT_DAYS,
+    DEFAULT_IS_QC_LOG_PUBLIC
 )
 from .skills import (
     SKILL_MASTER_LIST,
