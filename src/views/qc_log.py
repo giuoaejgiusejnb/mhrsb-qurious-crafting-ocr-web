@@ -7,7 +7,6 @@ import pytz
 from collections import defaultdict
 from firebase_admin import firestore
 from constants import (
-    HOME,
     COL_QC_LOGS,
     COL_USERS,
     COL_USER_SETTINGS,
@@ -17,14 +16,21 @@ from constants import (
     FIELD_CREATED_AT_STR,
     FIELD_IS_QC_LOG_PUBLIC
 )
+from components import (
+    LoadingScreen,
+    MountTrigger
+)
+from models import TypedPage
 
 @ft.component
-def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.client):
-    # --- State ---
-    target_user, set_target_user = ft.use_state(user_name)
+def QCLog(page: TypedPage) -> ft.Control:
+    user_name = page.app_state.user_name
+    db = page.app_state.db
+
+    target_user_ref = ft.use_ref(user_name)
+    logs_user_options_ref = ft.use_ref([])
+    logs_controls_ref = ft.use_ref([])
     is_loading, set_is_loading = ft.use_state(True)
-    logs_controls, set_logs_controls = ft.use_state([])
-    dropdown_options, set_dropdown_options = ft.use_state([])
 
     # Fletのコントロール（部品）作成はメインスレッド（UIスレッド）で行うのが安全．
     # 別スレッドで部品を作ろうとすると、たまに描画エラーの原因になることがあるため、
@@ -32,29 +38,14 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
     # ．．．らしい
 
     # --- データ取得・集計処理 ---
-    async def fetch_data():
+    async def fetch_data() -> None:
         set_is_loading(True)
-
         # 重い処理（Firestore通信 + 集計）を別スレッドで実行
-        def process():
-            # 1. ユーザー一覧の取得
-            users_list = []
-            for doc in db.collection(COL_USERS).stream():
-                user_settings = (
-                    db.collection(COL_USERS)
-                    .document(doc.id)
-                    .collection(COL_USER_SETTINGS)
-                    .document(DOC_ID_CURRENT)
-                    .get().to_dict() or {}
-                )
-                # 自分自身の履歴と，履歴を一般公開しているユーザーの履歴を表示
-                if doc.id == user_name or user_settings.get(FIELD_IS_QC_LOG_PUBLIC, True):
-                    users_list.append(ft.dropdown.Option(doc.id))
-
-            # 2. 履歴の取得と集集計
+        def process() -> None:
+            # 履歴の取得と集集計
             qc_log_docs = (
                 db.collection(COL_USERS)
-                .document(target_user)
+                .document(target_user_ref.current)
                 .collection(COL_QC_LOGS)
                 .order_by(FIELD_EXECUTED_AT, direction=firestore.Query.DESCENDING)
                 .stream()
@@ -79,10 +70,10 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
                     monthly_totals[month_key] += count
                     daily_totals[month_key][day_key] += count
             
-            return users_list, all_total_qc, monthly_totals, daily_totals, monthly_data
+            return all_total_qc, monthly_totals, daily_totals, monthly_data
 
         # 実行
-        u_list, total, m_totals, d_totals, m_data = await asyncio.to_thread(process)
+        total, m_totals, d_totals, m_data = await asyncio.to_thread(process)
 
         # UIコントロールの組み立て
         new_controls = []
@@ -147,34 +138,54 @@ def QCLog(page: ft.Page, set_route: callable, user_name: str, db: firestore.clie
                     )
                 new_controls.append(ft.Divider(height=10, color=ft.Colors.BLUE))
 
-        set_dropdown_options(u_list)
-        set_logs_controls(new_controls)
+        logs_controls_ref.current = new_controls
         set_is_loading(False)
-
-    # --- 初回起動時とtarget_userが変更されるごとに表示するデータを変更 ---
-    ft.use_effect(lambda: page.run_task(fetch_data), [target_user])
+        
+    # 起動時の初期化関数
+    async def init_qc_view() -> None:
+        # --- ドロップダウンの作成 ---
+        users_list = []
+        for doc in db.collection(COL_USERS).stream():
+            user_settings = (
+                db.collection(COL_USERS)
+                .document(doc.id)
+                .collection(COL_USER_SETTINGS)
+                .document(DOC_ID_CURRENT)
+                .get().to_dict() or {}
+            )
+            # 自分自身の履歴と，履歴を一般公開しているユーザーの履歴を表示
+            if doc.id == user_name or user_settings.get(FIELD_IS_QC_LOG_PUBLIC, True):
+                users_list.append(ft.dropdown.Option(doc.id))
+                
+        logs_user_options_ref.current = users_list
+        
+        # --- 表示する履歴を作成 ---
+        await fetch_data()
+        
+    async def change_target_user(e:ft.ControlEvent) -> None:
+        target_user_ref.current = e.control.value
+        await fetch_data()
 
     # --- UI ---
-    if is_loading:
-        return ft.Container(
-            content=ft.Column([
-                ft.ProgressRing(),
-                ft.Text("データを読み込み中...")
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+    if is_loading: # logs_controlsを作っている段階なら，ロード画面を表示
+        return MountTrigger(content=LoadingScreen(msg="練成履歴を読み込み中"), on_mount=init_qc_view)
+    else:
+        return ft.Column(
+            controls=[
+                # どのユーザーの履歴を選択するかのドロップダウン
+                ft.Dropdown(
+                    label="表示するユーザーを選択",
+                    value=target_user_ref.current,
+                    options=logs_user_options_ref.current,
+                    on_select=change_target_user,
+                    width=300,
+                ),
+                # 履歴表示エリア（ここをスクロールさせる）
+                ft.Column(
+                    controls=logs_controls_ref.current, 
+                    scroll=ft.ScrollMode.ALWAYS,
+                    expand=True
+                ) 
+            ],
             expand=True
         )
-
-    return ft.Column(
-        controls=[
-            ft.Dropdown(
-                label="表示するユーザーを選択",
-                value=target_user,
-                options=dropdown_options,
-                on_select=lambda e: set_target_user(e.data),
-                width=300,
-            ),
-            ft.Column(controls=logs_controls) 
-        ],
-        expand=True,
-        scroll=ft.ScrollMode.AUTO
-    )
