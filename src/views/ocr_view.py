@@ -8,7 +8,6 @@ from components import(
     DetailDialog
 )
 from constants import (
-    HOME,
     COL_USERS,
     COL_PREV_OCR_SETTINGS,
     COL_DESIRED_SKILLS_SETTINGS,
@@ -34,30 +33,28 @@ def OCRView(page: TypedPage) -> ft.Control:
     settings_name, set_settings_name = ft.use_state(previous_settings_name)
     input_zip_file, set_input_zip_file = ft.use_state(previous_input_zip_file)
 
-    # テキストカウンタークラスを定義
-    class TextCounter:
-        def __init__(self):
-            self.value = 0
-        def increment(self):
-            self.value += 1
-            return self.value
+    # --- 見出しのクラスを定義 ---
+    class SectionHeader(ft.Container):
+        # 見出し番号
+        _counter = 0
 
-    LABEL_SIZE = 20
-    LABEL_WIDTH = 1000
-    text_counter = TextCounter()
+        def __init__(self, text: str):
+            # 呼び出されるたびにカウントを＋1
+            SectionHeader._counter += 1
 
-    # 画像認識したい画像フォルダをdriveにアップロードするよう促す文とその名前を入力させるフィールドを定義
-    upload_guide_label =  f"""
-    {text_counter.increment()}. 画像認識したい画像フォルダをzipファイルにまとめて，Google Driveのフォルダにアップロードしてください．
+            super().__init__(
+                content=ft.Text(
+                    f"{SectionHeader._counter}. {text}",
+                    size=20,
+                    weight=ft.FontWeight.BOLD
+                ),
+                width=1000
+            )
+
+    # --- 画像認識したい画像フォルダをdriveにアップロードするよう促す文とその名前を入力させるフィールドを定義 ---
+    input_zip_file_field_label =  """画像認識したい画像フォルダをzipファイルにまとめて，Google Driveのフォルダにアップロードしてください．
     アップロード出来たら，zipファイルの名前を記入してください．
     """
-    upload_guide_container = ft.Container(
-        ft.Text(
-            upload_guide_label,
-            size=LABEL_SIZE
-        ),
-        width=LABEL_WIDTH
-    )
 
     def save_input_zip_file(e: ft.ControlEvent):
         ocr_settings_doc_ref = (
@@ -79,17 +76,11 @@ def OCRView(page: TypedPage) -> ft.Control:
         on_blur=save_input_zip_file
     )
 
-    # DBに保存してある設定名を選択し，その設定名を表示するコントロールを定義
-    settings_selection_row_label =  f"""
-    {text_counter.increment()}. 欲しいスキル設定を選択してください．
-    """
-    settings_selection_row_container = ft.Container(
-        ft.Text(
-            settings_selection_row_label,
-            size=LABEL_SIZE
-        ),
-        width=LABEL_WIDTH
-    )
+    input_zip_file_controls = (input_zip_file_field_label, input_zip_file_field)
+
+    # --- DBに保存してある設定名を選択し，その設定名を表示するコントロールを定義 ---
+    settings_selection_row_label =  "欲しいスキル設定を選択してください．"
+
     settings_ref = (
         db.collection(COL_USERS)
         .document(user_name)
@@ -114,29 +105,24 @@ def OCRView(page: TypedPage) -> ft.Control:
         expand=True
     )
 
-    # Colabを開いてGPUを有効にするよう促す文とボタンを定義
-    open_colab_sentence_label = f"""
-    {text_counter.increment()}. Google Colabで画像認識を実行してください．
-    """
-    open_colab_sentence_container = ft.Container(
-        ft.Text(
-            open_colab_sentence_label,
-            size=LABEL_SIZE
-        ),
-        width=LABEL_WIDTH
-    )
+    settings_selection_controls = (settings_selection_row_label, settings_selection_row)
+
+    # --- Colabを開いてGPUを有効にするよう促す文とボタンを定義 ---
+    open_colab_sentence_label = "Google Colabで画像認識を実行してください．"
 
     open_colab_sentence = get_open_colab_sentence(user_name, github_token, settings_ref, settings_name, input_zip_file)
 
+    open_colab_controls = (open_colab_sentence_label, open_colab_sentence)
+
+    # --- UI配置 ---
+    controls = []
+    print(222)
+    for label, control in [input_zip_file_controls, settings_selection_controls, open_colab_controls]:
+        controls.append(SectionHeader(text=label))
+        controls.append(control)
+
     content = ft.Column(
-        controls=[   
-            upload_guide_container,
-            input_zip_file_field,
-            settings_selection_row_container,
-            settings_selection_row,
-            open_colab_sentence_container,
-            open_colab_sentence,
-        ],
+        controls=controls,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER, # 中身を中央へ
         scroll=ft.ScrollMode.ADAPTIVE,
         expand=True
