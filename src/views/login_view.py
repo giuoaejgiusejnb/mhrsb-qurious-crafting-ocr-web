@@ -94,7 +94,7 @@ def LoginView(page: TypedPage) -> ft.Control:
         await login(name_input, password)
 
     return ft.Column([
-        ft.Text("ログイン画面", size=30, weight="bold"),
+        ft.Text("ログイン画面", size=30, weight=ft.FontWeight.BOLD),
         user_name_field, password_field,
         ft.Button("ログイン", on_click=login_click),
         ft.Button("ゲストでログイン", on_click=guest_login_click ),

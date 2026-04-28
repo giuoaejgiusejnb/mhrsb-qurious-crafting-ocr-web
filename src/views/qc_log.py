@@ -87,7 +87,7 @@ def QCLog(page: TypedPage) -> ft.Control:
                         ft.Text("トータル練成実績", size=14, color=ft.Colors.BLUE_GREY_100),
                     ], alignment=ft.MainAxisAlignment.CENTER),
                     ft.Row([
-                        ft.Text(f"{total:,}", size=40, weight="bold", color=ft.Colors.WHITE),
+                        ft.Text(f"{total:,}", size=40, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
                         ft.Text(" 回", size=30, color=ft.Colors.WHITE_70),
                     ], alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.END),
                 ]),
@@ -113,7 +113,7 @@ def QCLog(page: TypedPage) -> ft.Control:
             new_controls.append(
                 ft.Container(
                     content=ft.Row([
-                        ft.Text(f"{month}月", weight="bold", size=18, color="white"),
+                        ft.Text(f"{month}月", weight=ft.FontWeight.BOLD, size=18, color="white"),
                         ft.Column([
                             ft.Text(f"月間計: {month_sum}", size=14, color="white"),
                             ft.Text(f"日平均(全日): {daily_average_in_month:.1f}", size=12, color="white"),
@@ -127,7 +127,7 @@ def QCLog(page: TypedPage) -> ft.Control:
 
             for day, logs in daily_data.items():
                 day_sum = d_totals[month][day]
-                new_controls.append(ft.Text(f"{day}日 合計: {day_sum}", weight="bold", bgcolor=ft.Colors.BLUE_GREY_200))
+                new_controls.append(ft.Text(f"{day}日 合計: {day_sum}", weight=ft.FontWeight.BOLD, bgcolor=ft.Colors.BLUE_GREY_200))
                 for log in logs:
                     new_controls.append(
                         ft.ListTile(

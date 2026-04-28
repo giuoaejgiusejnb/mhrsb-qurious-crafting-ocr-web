@@ -41,11 +41,11 @@ def SkillSettingsView(page : TypedPage) -> ft.Control:
             selected_skills.discard(skill_name)
 
     # データを元にUI要素を生成
-    content_list = [ft.Text("スキル選択（翔と蝕はどちらも選択しないかどちらも選択するかを推奨）", size=25, weight="bold")]
+    content_list = [ft.Text("スキル選択（翔と蝕はどちらも選択しないかどちらも選択するかを推奨）", size=25, weight=ft.FontWeight.BOLD)]
     for cost, skills in SKILLS_DATA.items():
         # セクションの見出し（コスト）
         content_list.append(
-            ft.Text(cost, size=20, weight="bold", color=ft.Colors.BLUE_ACCENT)
+            ft.Text(cost, size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_ACCENT)
         )
         # チェックボックス
         checkboxes = []
