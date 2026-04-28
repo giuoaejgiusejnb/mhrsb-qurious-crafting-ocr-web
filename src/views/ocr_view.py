@@ -116,7 +116,6 @@ def OCRView(page: TypedPage) -> ft.Control:
 
     # --- UI配置 ---
     controls = []
-    print(222)
     for label, control in [input_zip_file_controls, settings_selection_controls, open_colab_controls]:
         controls.append(SectionHeader(text=label))
         controls.append(control)
