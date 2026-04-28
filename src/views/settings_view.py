@@ -18,6 +18,15 @@ def SettingsView(page: TypedPage) -> ft.Control:
     user_name = page.app_state.user_name
     db = page.app_state.db
 
+    # 各設定のラベル
+    class SettingLabel(ft.Text):
+        def __init__(self, value):
+            super().__init__(
+                value=value,
+                size=20,
+                weight=ft.FontWeight.BOLD,
+            )
+
     # --- ユーザー設定の読み込み ---
     user_settings_ref = (
         db.collection(COL_USERS)
@@ -35,7 +44,7 @@ def SettingsView(page: TypedPage) -> ft.Control:
         )
 
     share_toggle = ft.Column([
-        ft.Text("練成履歴公開設定", size=20, weight="bold"),
+        SettingLabel("練成履歴公開設定"),
         ft.Switch(
             label="練成履歴を他の人にも公開する",
             on_change=on_change_share,
@@ -57,7 +66,7 @@ def SettingsView(page: TypedPage) -> ft.Control:
         )
         
     alert_days_slider = ft.Column([
-        ft.Text("通知設定", size=20, weight="bold"),
+        SettingLabel("通知設定"),
         ft.Container(
             content=ft.Column([
                 ft.Text(f"期限切れの警告を開始する日数: {current_threshold}日前", color=ft.Colors.RED),
