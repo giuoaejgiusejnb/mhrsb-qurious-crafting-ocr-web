@@ -3,6 +3,5 @@ flet[web]
 uvicorn
 fastapi
 firebase-admin
-pyrebase4
 nbformat
-pytz
+pydantic

@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Flet App",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "src/main.py", // 起動ファイルに合わせて変更
+            "console": "integratedTerminal",
+            "justMyCode": true // 自分のコード内だけで止めたい場合はtrue
+        }
+    ]
+}

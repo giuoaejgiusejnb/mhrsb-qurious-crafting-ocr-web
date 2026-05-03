@@ -1,4 +1,1 @@
-from .app_state import (
-    AppState,
-    TypedPage
-)
+# 循環参照となるので，「from .app_state」は書かない

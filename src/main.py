@@ -1,150 +1,116 @@
 # main.py - アプリのエントリーポイント
-
-import warnings
-# python_jwt に関する DeprecationWarning を無視する
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="pyrebase")
-
-from datetime import datetime, timezone
+from datetime import datetime
 import flet as ft
-import firebase_admin
-from firebase_admin import credentials, firestore
-import pyrebase
-import os
-import pytz
-import json
-import httpx
+from zoneinfo import ZoneInfo
 import flet.fastapi as flet_fastapi
 from fastapi import FastAPI, Body
 from views import Root
 from constants import (
     ENDPOINT_QC_LOG,
-    COL_USERS,
-    COL_QC_LOGS,
-    FIELD_EXECUTED_AT,
-    FIELD_QC_COUNT,
-    FIELD_CREATED_AT_STR,
     PL_KEY_QC_COUNT,
-    PL_KEY_USER_NAME,
-    GIST_URL
+    PL_KEY_USER_ID,
 )
 from components import LoadingScreen
-from models import TypedPage
+from services import (
+    fb_auth,
+    fb_db,
+    shared_gist
+)
+from models.app_state import TypedPage
+from repositories import (
+    QCLogsRepository,
+    QCStatsRepository,
+    QCLogs,
+    QCStats,
+    UserSettingsRepository,
+    UserSettings
+)
 
 app = FastAPI()
-
+# main関数内で初期化するとユーザーごとにFirestoreに接続されるので外側に作る
 async def main(page: ft.Page):
     page: TypedPage = page
 
     # 画面にロード中表示を出す
     page.add(LoadingScreen(msg="Gistデータを取得中..."))
 
-    # --- Firebase Admin SDK (サーバー権限) の初期化 ---
-    if not firebase_admin._apps:
-        cert_json = os.getenv("FIREBASE_KEY")
-        if cert_json:
-            cred = credentials.Certificate(json.loads(cert_json))
-        else:
-            test_path = r"C:\flet-app-web-files\flet-app-mhrsb-ocr-firebase-adminsdk-fbsvc-358310d152.json"
-            cred = credentials.Certificate(test_path)
-        firebase_admin.initialize_app(cred)
-
-    db = firestore.client()
-
-    # --- Pyrebase (ユーザーログイン用) の設定 ---
-    config_json = os.getenv("FIREBASE_CLIENT_CONFIG")
-    if config_json:
-        # Fly.io環境: 環境変数から辞書に変換
-        config = json.loads(config_json)
+    try:
+        remaining_days, exp_str = await shared_gist.get_token_expiry_info()
+    except Exception as e:
+        page.show_dialog(ft.SnackBar(
+            ft.Text(f"起動エラー：{e}"),
+            persist=True,
+            action="ok",
+            behavior=ft.SnackBarBehavior.FLOATING,
+            margin=ft.Margin.only(bottom=300, left=20, right=20)
+            )
+        )
     else:
-        # ローカル環境: ローカルファイルから読み込み
-        client_config_path = r"C:\flet-app-web-files\firebase_client_config.json"
-        with open(client_config_path, "r", encoding="utf-8") as f:
-            config = json.load(f)
+        # ロード画面消去
+        page.clean()
 
-    firebase = pyrebase.initialize_app(config)
-    auth = firebase.auth()
-
-    # gistの設定
-    github_token = os.getenv("GITHUB_TOKEN")
-    if not github_token:
-        test_path = r"C:\flet-app-web-files\github_token.txt"
-        with open(test_path, "r", encoding="utf-8") as f:
-            github_token = f.read()
-
-    headers = {
-        "Authorization": f"Bearer {github_token}",
-        "Accept": "application/vnd.github+json"
-    }
-
-    async with httpx.AsyncClient() as client:
-        res = await client.get(GIST_URL, headers=headers)
-    if res.status_code == 401:
-        page.add(ft.Text("トークンの有効期限が切れているか，無効なトークンです．アプリ作成者に連絡してください"))
-        return
-    elif res.status_code != 200:
-        page.add(ft.Text(f"エラーが発生しました．  res.status_code:{res.status_code}"))
-        return
-
-    exp_str = res.headers.get("github-authentication-token-expiration")
-    exp_date = datetime.strptime(exp_str, "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
-
-    # gistの有効期限の残り日数を計算
-    remaining_days = (exp_date - now).days
-
-    # ロード画面消去
-    page.clean()
-
-    # スクロールバーの定義
-    page.theme = ft.Theme(
-        scrollbar_theme=ft.ScrollbarTheme(
-            track_color={ # バーが通る道の部分の色
-                ft.ControlState.HOVERED: ft.Colors.BLUE_GREY_50, # マウスを乗せた時の色
-                ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT, # 通常時の色
-            },
-            thumb_color={ # 動くバーの部分の色
-                ft.ControlState.HOVERED: ft.Colors.BLUE_GREY_400,
-                ft.ControlState.DEFAULT: ft.Colors.BLUE_GREY_200,
-            },
-            thickness=10,        # バーの太さ（デフォルトは短い）
-            radius=5,            # 角の丸み
-            main_axis_margin=5,
-            cross_axis_margin=5,
-            interactive=True,    # ドラッグ可能にする
+        # スクロールバーの定義
+        page.theme = ft.Theme(
+            scrollbar_theme=ft.ScrollbarTheme(
+                track_color={ # バーが通る道の部分の色
+                    ft.ControlState.HOVERED: ft.Colors.BLUE_GREY_50, # マウスを乗せた時の色
+                    ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT, # 通常時の色
+                },
+                thumb_color={ # 動くバーの部分の色
+                    ft.ControlState.HOVERED: ft.Colors.BLUE_GREY_400,
+                    ft.ControlState.DEFAULT: ft.Colors.BLUE_GREY_200,
+                },
+                thickness=10,        # バーの太さ（デフォルトは短い）
+                radius=5,            # 角の丸み
+                main_axis_margin=5,
+                cross_axis_margin=5,
+                interactive=True,    # ドラッグ可能にする
+            )
         )
-    )
 
-    # ページ遷移
-    page.render(
-        lambda: Root(
-            page=page,
-            auth=auth,
-            db=db,
-            github_token=github_token,
-            remaining_days=remaining_days,
-            exp_str=exp_str
+        # ページ遷移
+        page.render(
+            lambda: Root(
+                page=page,
+                auth=fb_auth,
+                db=fb_db.db,
+                shared_gist=shared_gist,
+                remaining_days=remaining_days,
+                exp_str=exp_str
+            )
         )
-    )
 
 @app.post(ENDPOINT_QC_LOG)
 async def receive_data(payload: dict = Body(...)):
-    jst = pytz.timezone('Asia/Tokyo')
-    executed_at = datetime.now(jst)
+    jst = ZoneInfo("Asia/Tokyo")
+    executed_at: datetime = datetime.now(jst)
+    year_month = executed_at.strftime("%Y-%m")
 
-    user_name = payload.get(PL_KEY_USER_NAME)
+    user_id = payload.get(PL_KEY_USER_ID)
     qc_count = payload.get(PL_KEY_QC_COUNT)
-    db = firestore.client()
 
-    if user_name is None or qc_count is None:
+    if user_id is None or qc_count is None:
         return False
 
-    qc_data = {
-        FIELD_EXECUTED_AT: executed_at,
-        FIELD_QC_COUNT: qc_count,
-        FIELD_CREATED_AT_STR: executed_at.strftime('%Y-%m-%d %H:%M:%S') 
-    }
+    db = fb_db.db
+    batch = db.batch()
+    qc_logs_repo = QCLogsRepository(db)
+    qc_stats_repo = QCStatsRepository(db)
+    user_repo = UserSettingsRepository(db)
 
-    db.collection(COL_USERS).document(user_name).collection(COL_QC_LOGS).add(qc_data)
+    await qc_logs_repo.update(
+        user_id=user_id,
+        logs=QCLogs(executed_at=executed_at, qc_count=qc_count),
+        batch=batch
+    )
+    await qc_stats_repo.update(user_id=user_id,
+                        year_month=year_month,
+                        stats=QCStats(monthly_count=qc_count, qc_last_executed_at=executed_at),
+                        batch=batch
+    )
+    await user_repo.update(user_id=user_id, settings=UserSettings(total_qc_count=qc_count), batch=batch)
+
+    await batch.commit()
 
     return True
 

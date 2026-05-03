@@ -1,34 +1,24 @@
-from firebase_admin import firestore
-from constants import (
-    COL_USERS,
-    COL_PREV_OCR_SETTINGS,
-    DOC_ID_CURRENT,
-    FIELD_SKILLS_SETTINGS_NAME
-    )
+from constants import FIELD_SKILLS_SETTINGS_NAME
 from .load_settings_dialog_base import LoadSettingsDialogBase
+from models.app_state import TypedPage
+from repositories import UserSettings
 
 class SettingsRunOCRDialog(LoadSettingsDialogBase):
-    def __init__(self, user_name: str, db: firestore.client, on_load: callable):
-        super().__init__(user_name, db, on_load, is_delete_button_visible=False, needs_overwrite_confirm=False)
-        self.ocr_settings_doc_ref =(
-            db.collection(COL_USERS)
-            .document(user_name)
-            .collection(COL_PREV_OCR_SETTINGS)
-            .document(DOC_ID_CURRENT)
+    def __init__(self, page: TypedPage, on_load: callable):
+        super().__init__(page, on_load, is_delete_button_visible=False, needs_overwrite_confirm=False)
+
+    async def show_overwrite_confirm_dlg(self, e):
+        settings_name = self.settings_selection_group.value
+        self.overwrite_confirm_msg = f"{settings_name}を読み込みます．"
+        await super().show_overwrite_confirm_dlg(e)
+
+    async def execute_load(self, e=None):
+        settings_name = self.settings_selection_group.value
+        self.on_load(settings_name)
+
+        await self.user_settings_repo.update(
+            user_id=self.user_id,
+            settings=UserSettings(last_selected_settings_name=settings_name)
         )
 
-    def show_overwrite_confirm_dlg(self):
-        self.settings_name = self.settings_selection_group.value
-        self.overwrite_confirm_msg = f"{self.settings_name}を読み込みます．"
-        super().show_overwrite_confirm_dlg()
-
-    def execute_load(self):
-        self.on_load(self.settings_name)
-
-        self.ocr_settings_doc_ref.set({
-            FIELD_SKILLS_SETTINGS_NAME: self.settings_name
-        }, merge=True)
-
-        self.open = False
-        
-        self.page.update()
+        self.page.pop_dialog() # ダイアログを消す

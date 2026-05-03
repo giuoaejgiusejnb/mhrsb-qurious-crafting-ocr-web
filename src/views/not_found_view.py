@@ -1,5 +1,5 @@
 import flet as ft
-from models import TypedPage
+from models.app_state import TypedPage
 
 # --- ページが見つからなかったときのコンポーネント ---
 @ft.component

@@ -1,17 +1,22 @@
 import flet as ft
-from firebase_admin import firestore
-from constants import FIELD_SKILLS
+from models.app_state import TypedPage
+from .loading_screen import LoadingScreen
 
 class DetailDialog(ft.AlertDialog):
-    def __init__(self, settings_name: str, settings_ref: firestore.CollectionReference, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, page: TypedPage, settings_name: str):
+        super().__init__()
         self.title=ft.Text(f"「{settings_name}」の詳細")
-        data = (
-            settings_ref
-            .document(settings_name)
-            .get().to_dict() or {}
-        )
-        skills = data.get(FIELD_SKILLS)
+        self.settings_name = settings_name
+        self.user_id = page.app_state.user_id
+        self.settings_repo = page.app_state.repos.qc_settings_repo
+        self.content = LoadingScreen()
+
+    def did_mount(self):
+        self.page.run_task(self.my_async_init)
+
+    async def my_async_init(self):
+        settings = await self.settings_repo.fetch(self.user_id, self.settings_name)
+        skills = settings.skills
 
         if skills is not None: # 指定した設定が存在するとき
             self.content = ft.Column(
@@ -39,6 +44,8 @@ class DetailDialog(ft.AlertDialog):
             )
 
         else:
-            self.content=ft.Text(f"{settings_name}は存在しません")
+            self.content=ft.Text(f"{self.settings_name}は存在しません")
 
         self.actions=[ft.TextButton("閉じる", on_click=lambda e: e.page.pop_dialog())]
+        
+        self.page.update()

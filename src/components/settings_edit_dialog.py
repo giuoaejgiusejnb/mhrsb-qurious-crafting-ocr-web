@@ -1,22 +1,22 @@
 import flet as ft
-from firebase_admin import firestore
 from .load_settings_dialog_base import LoadSettingsDialogBase
 from constants import FIELD_SKILLS
+from models.app_state import TypedPage
 
 class SettingsEditDialog(LoadSettingsDialogBase):
-    def __init__(self, user_name: str, db: firestore.client, on_load: callable):
-        super().__init__(user_name, db, on_load)
+    def __init__(self, page: TypedPage, on_load: callable):
+        super().__init__(page=page, on_load=on_load)
 
-    def show_overwrite_confirm_dlg(self):
-        self.settings_name = self.settings_selection_group.value
-        self.overwrite_confirm_msg = f"{self.settings_name}を読み込みます．\n現在の選択は上書きされますがよろしいですか？"
-        super().show_overwrite_confirm_dlg()
+    async def show_overwrite_confirm_dlg(self, e):
+        settings_name = self.settings_selection_group.value
+        self.overwrite_confirm_msg = f"{settings_name}を読み込みます．\n現在の選択は上書きされますがよろしいですか？"
+        await super().show_overwrite_confirm_dlg(e)
 
-    def execute_load(self):
+    async def execute_load(self):
         # チェックボックス変更
-        settings_doc = self.settings_ref.document(self.settings_name).get()
-        settings_data = settings_doc.to_dict()
-        new_skills = set(settings_data[FIELD_SKILLS])
+        settings_name = self.settings_selection_group.value
+        settings_data = await self.settings_repo.fetch(self.user_id, settings_name)
+        new_skills = settings_data.skills
         self.on_load(new_skills)
 
         # 二つのダイアログを消す
@@ -25,7 +25,7 @@ class SettingsEditDialog(LoadSettingsDialogBase):
 
         # スナックバーを表示
         snack_bar = ft.SnackBar(
-            content=ft.Text(f"「{self.settings_name}」を適用しました"),
+            content=ft.Text(f"「{settings_name}」を適用しました"),
             behavior=ft.SnackBarBehavior.FLOATING,
             margin=ft.Margin.only(bottom=100, left=20, right=20),
         )

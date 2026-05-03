@@ -1,34 +1,29 @@
 # スキル設定ページのコンポーネント
 
 import flet as ft
-import json
-from firebase_admin import firestore
 from functools import partial
 from constants import (
-    HOME,
     SKILLS_DATA
 )
 from components import (
     SaveSettingsDialog,
     SettingsEditDialog,
 )
-from models import TypedPage
+from models.app_state import TypedPage
 
 # --- 欲しいスキル設定ページのコンポーネント ---
 @ft.component
 def SkillSettingsView(page : TypedPage) -> ft.Control:
-    user_name = page.app_state.user_name
-    db = page.app_state.db
     selected_skills, set_selected_skills = ft.use_state(set())
 
     # 保存ボタンを押したときの処理（保存ダイアログを表示）
     def show_save_settings_dialog(e):
-        dialog = SaveSettingsDialog(user_name=user_name, db=db, selected_skills=selected_skills)
+        dialog = SaveSettingsDialog(page=page, selected_skills=selected_skills)
         page.show_dialog(dialog)
 
     # 読み込みボタンを押したときの処理（読み込みダイアログを表示）
     def show_load_settings_dialog(e):
-        dialog = SettingsEditDialog(user_name=user_name, db=db, on_load=set_selected_skills)
+        dialog = SettingsEditDialog(page=page, on_load=set_selected_skills)
         page.show_dialog(dialog)
 
     # スキルのチェックがオンオフされるごとに，selected_skillsも更新

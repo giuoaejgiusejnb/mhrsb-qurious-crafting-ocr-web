@@ -1,30 +1,30 @@
 # ルーティングと認証状態の管理を行うコンポーネント
 
 import flet as ft
-from firebase_admin import firestore
-from pyrebase.pyrebase import Auth
+from google.cloud.firestore import AsyncClient
 from constants import (
     HOME,
-    ROUTE_OCR,
     ROUTE_SKILLS_SETTINGS,
     LOGIN,
-    ROUTE_QC_LOG,
+    ROUTE_OCR,
     SETTINGS,
+    ROUTE_QC_LOG,
     KEY_USER_NAME,
+    KEY_USER_ID,
     PAGE_TITLES,
     UI_TITLES,
-    DEFAULT_UI_TITLE,
+    DEFAULT_ALERT_DAYS,
     DEFAULT_PAGE_TITLE,
-    COL_USERS,
-    COL_USER_SETTINGS,
-    DOC_ID_CURRENT,
-    FIELD_ALERT_DAYS,
-    DEFAULT_ALERT_DAYS
+    DEFAULT_UI_TITLE
 )
 from components import LoadingScreen
-from models import (
+from models.app_state import (
     AppState,
     TypedPage
+)
+from services import (
+    FirebaseAuth,
+    Gist
 )
 from views import (
     HomeView,
@@ -32,12 +32,12 @@ from views import (
     SkillSettingsView,
     SettingsView,
     OCRView,
-    QCLog,
+     QCLog,
     NotFoundView
 )
 
 @ft.component
-def Root(page: TypedPage, auth: Auth, db: firestore.firestore.Client, github_token: str, remaining_days: int, exp_str: str) -> ft.Control:
+def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist, remaining_days: int, exp_str: str) -> ft.Control:
     is_loading, set_is_loading = ft.use_state(True)
     route, set_route = ft.use_state(HOME)
 
@@ -46,28 +46,24 @@ def Root(page: TypedPage, auth: Auth, db: firestore.firestore.Client, github_tok
         page.app_state = AppState(
             auth=auth,
             db=db,
-            github_token=github_token,
+            shared_gist=shared_gist,
             is_logged_in=False,
             set_route=set_route,
             user_name=""
         )
+        page.on_disconnect = page.app_state.close_all
 
     async def initial_setup()-> None:
-        # --- 前回のログインデータが残っているかチェック ---
-        name = await ft.SharedPreferences().get(KEY_USER_NAME) # 前回のログインユーザー
+        #--- 前回のログインデータが残っているかチェック ---
+        uid = await ft.SharedPreferences().get(KEY_USER_ID) # 前回のログインユーザーID
+        name = await ft.SharedPreferences().get(KEY_USER_NAME) # 前回のログインユーザー名
         alert_threshold = DEFAULT_ALERT_DAYS # gist有効期限警告の閾値
 
-        if name: # ログインデータが残っているならそのデータでログイン
-            await page.app_state.login(name)
+        if name and uid: # ログインデータが残っているならそのデータでログイン
+            await page.app_state.login(uid, name)
             # alert_thresholdを取得
-            user_settings_ref = (
-                db.collection(COL_USERS)
-                .document(page.app_state.user_name)
-                .collection(COL_USER_SETTINGS)
-                .document(DOC_ID_CURRENT)
-            )
-            user_settings = user_settings_ref.get().to_dict() or {}
-            alert_threshold = user_settings.get(FIELD_ALERT_DAYS, alert_threshold)
+            settings = await page.app_state.repos.user_settings_repo.fetch(uid)
+            alert_threshold = settings.alert_days
         
         # --- gistの有効期限が近づいていたら，警告表示 ---
         if remaining_days <= alert_threshold:
@@ -109,7 +105,11 @@ def Root(page: TypedPage, auth: Auth, db: firestore.firestore.Client, github_tok
         center_title=True,
         bgcolor=ft.Colors.BLUE_GREY_400,
     )
-    return ROUTES_MAP.get(route, NotFoundView)(page)
+
+    try:
+        return ROUTES_MAP.get(route, NotFoundView)(page)
+    except Exception as e:
+        return ft.Text(f"Error loading view for route '{route}': {e}")
 
 # ルートとView関数のマッピング
 ROUTES_MAP = {

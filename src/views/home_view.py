@@ -7,7 +7,7 @@ from constants import(
     ROUTE_OCR,
     ROUTE_QC_LOG,
 )
-from models import TypedPage
+from models.app_state import TypedPage
 
 @ft.component
 def HomeView(page: TypedPage) -> ft.Control:

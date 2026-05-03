@@ -1,0 +1,22 @@
+
+2. QCSettings サブコレクション
+ユーザーが作成した「QC設定」のプリセットを保存します。
+ドキュメントパス: Users/{userId}/QCSettings/{settingId}
+フィールド:
+settings_name: string（設定の名前：例「ラインA用」）
+settings_dict: map（具体的な設定値の辞書データ）
+createdAt: timestamp
+3. QCStats サブコレクション
+月ごとの集計データを保持します。
+ドキュメントパス: Users/{userId}/QCStats/{yyyy-mm}
+フィールド:
+monthlyCount: number（その月の合計実行回数：incrementで更新）
+lastUpdated: timestamp
+4. QCLogs サブコレクション
+「いつ、どの設定で、どのファイルで」実行したかの詳細な履歴です。
+ドキュメントパス: Users/{userId}/QCLogs/{logId}
+フィールド:
+timestamp: timestamp
+settingId: string（使用したQCSettingsのID）
+fileName: string（選択したファイル名）
+result: map（実行結果の詳細）

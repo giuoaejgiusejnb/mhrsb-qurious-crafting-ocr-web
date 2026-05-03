@@ -1,31 +1,31 @@
 import flet as ft
-from firebase_admin import firestore
 from functools import partial
-from constants import (
-    COL_USERS,
-    COL_DESIRED_SKILLS_SETTINGS
-)
 from .detail_dialog import DetailDialog
+from models.app_state import TypedPage
+from .loading_screen import LoadingScreen
 
 class LoadSettingsDialogBase(ft.AlertDialog):
-    def __init__(self, user_name: str, db: firestore.client, on_load: callable, is_delete_button_visible=True, needs_overwrite_confirm=True):
+    def __init__(self, page: TypedPage, on_load: callable, is_delete_button_visible=True, needs_overwrite_confirm=True):
         super().__init__()
 
         self.title = ft.Text("設定読み込み")
         self.overwrite_confirm_msg = "上書きしても構いませんか？"
         self.needs_overwrite_confirm = needs_overwrite_confirm
         self.on_load = on_load
-        self.settings_ref = (
-            db.collection(COL_USERS)
-            .document(user_name)
-            .collection(COL_DESIRED_SKILLS_SETTINGS)
-        )
+        self.is_delete_button_visible = is_delete_button_visible
+        self.user_id = page.app_state.user_id
+        self.settings_repo = page.app_state.repos.qc_settings_repo
+        self.user_settings_repo = page.app_state.repos.user_settings_repo
+        self.content = LoadingScreen()
 
+    def did_mount(self):
+        self.page.run_task(self.my_async_init)
+
+    async def my_async_init(self):
         # ラジオボタンの選択肢を格納するリスト
         radio_options = []
 
-        docs = self.settings_ref.stream()
-        setting_names = [doc.id for doc in docs]
+        setting_names = await self.settings_repo.fetch_all_settings_names(self.page.app_state.user_id)
         for settings_name in setting_names:
         # 設定名、詳細ボタンを横に並べるRowを作成
         # ラジオボタン本体（ft.Radio）をRowに組み込む
@@ -42,16 +42,16 @@ class LoadSettingsDialogBase(ft.AlertDialog):
                         tooltip="詳細を表示",
                         icon=ft.Icons.INFO_OUTLINE,
                         # こうしないとクロージャの仕様（遅延評価）で，settings_nameがループの最後のものに固定される
-                        on_click=partial(lambda settings_name, settings_ref, e
-                                        : e.page.show_dialog(DetailDialog(settings_name, settings_ref)),
-                                        settings_name, self.settings_ref)
+                        on_click=partial(lambda settings_name, page, e
+                                        : e.page.show_dialog(DetailDialog(page, settings_name)),
+                                        settings_name, self.page)
                     ),
 
                     # 削除ボタン（is_delete_button_visibleがTrueのときのみ表示）
                     ft.IconButton(
                         tooltip="削除する",
                         icon=ft.Icons.DELETE,
-                        visible=is_delete_button_visible,
+                        visible=self.is_delete_button_visible,
                         on_click=partial(self.show_deltete_confirm_dlg, settings_name=settings_name)
                     ),
                 ],
@@ -64,28 +64,29 @@ class LoadSettingsDialogBase(ft.AlertDialog):
         self.settings_selection_group = ft.RadioGroup(
             content=ft.Column(radio_options, scroll=ft.ScrollMode.AUTO),
             on_change=lambda _: (
-            setattr(self.load_button, "disabled", False), # 選択されたら無効化を解除
-            self.update() # ダイアログを再描画)
+                setattr(self.load_button, "disabled", False), # 選択されたら無効化を解除
+                self.update() # ダイアログを再描画)
             )
         )
+
         self.content = ft.Column(controls=[self.settings_selection_group], tight=True)
         self.load_button = ft.Button(
             "選んだ設定を読み込む",
             on_click=self.show_overwrite_confirm_dlg,
             disabled=True
         )
-        self.actions = ft.Row(
-            controls=[
+        self.actions = [
                 ft.TextButton("戻る", on_click=lambda _: self.page.pop_dialog()),
                 self.load_button
-            ],
-            alignment=ft.MainAxisAlignment.START,
-        )
+            ]
+        
+        self.page.update()
 
-    def show_overwrite_confirm_dlg(self): 
+    async def show_overwrite_confirm_dlg(self, e):
         if not self.needs_overwrite_confirm:
-            self.execute_load()
+            await self.execute_load()
             return
+
         overwrite_confirm_dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("確認"),
@@ -94,40 +95,39 @@ class LoadSettingsDialogBase(ft.AlertDialog):
                 ft.TextButton("キャンセル", on_click=lambda _: self.page.pop_dialog()),
                 ft.TextButton(
                     "読み込む",
-                    on_click=self.execute_load
+                    on_click=self.execute_load,
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
         self.page.show_dialog(overwrite_confirm_dlg)
     
-    def execute_load(self):
+    async def execute_load(self, e=None):
         pass
 
     def show_deltete_confirm_dlg(self, e, settings_name):
-        self.settings_name = settings_name
         delete_confirm_dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text("確認"),
             content=ft.Text(f"{settings_name}を削除しますがよろしいですか？"),
             actions=[
-                ft.TextButton("キャンセル", on_click=self.page.pop_dialog()),
+                ft.TextButton("キャンセル", on_click=lambda _: self.page.pop_dialog()),
                 ft.TextButton(
                     "削除する",
-                    on_click=self.execute_delete
+                    on_click=lambda _: self.page.run_task(self.execute_delete, settings_name)
                     )
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
         self.page.show_dialog(delete_confirm_dlg)
 
-    def execute_delete(self):
-        self.settings_ref.document(self.settings_name).delete()
+    async def execute_delete(self, settings_name):
+        await self.settings_repo.delete_settings(self.page.app_state.user_id, settings_name)
         # 読み込みダイアログに変更を反映させる
         # UIのリスト(Columnのcontrols)から削除するContainerを探す
         target_container = None
         for control in self.settings_selection_group.content.controls:
-            if control.data == self.settings_name:
+            if control.data == settings_name:
                 target_container = control
                 break
 
@@ -135,7 +135,7 @@ class LoadSettingsDialogBase(ft.AlertDialog):
             # UIから削除
             self.settings_selection_group.content.controls.remove(target_container)
             # もし削除したものが現在選択中だったら選択を解除
-            if self.settings_selection_group.value == self.settings_name:
+            if self.settings_selection_group.value == settings_name:
                 self.settings_selection_group.value = None
                 self.load_button.disabled = True
 
