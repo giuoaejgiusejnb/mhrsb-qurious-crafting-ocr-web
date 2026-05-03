@@ -6,3 +6,5 @@ __pycache__/
 Dockerfile
 .dockerignore
 admin_tools.py
+.vscode/
+src/test.py
