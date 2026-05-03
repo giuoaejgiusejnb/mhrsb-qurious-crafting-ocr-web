@@ -32,6 +32,7 @@ def LoginView(page: TypedPage) -> ft.Control:
         []
     )
     # ログインや新規登録失敗時に表示するメッセージ
+    # TODO エラーではなく，ステータスメッセージ（ログイン中など）を追加
     error_str, set_error_str = ft.use_state("")
 
     error_text = ft.Text(error_str, color="red")
