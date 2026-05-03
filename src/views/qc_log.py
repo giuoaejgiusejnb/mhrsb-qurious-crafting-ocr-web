@@ -37,6 +37,7 @@ def QCLog(page: TypedPage) -> ft.Control:
         year, month = year_month.split("-")
 
         # 履歴の取得
+        # TODO limitを制限して，ボタンを押したら残りを取得
         qc_logs = await logs_repo.get_recent_logs_by_month(target_user_id_ref.current, year_month, limit=1000)
         daily_data = defaultdict(list)
         daily_totals = defaultdict(int)
