@@ -44,7 +44,7 @@ def LoginView(page: TypedPage) -> ft.Control:
 
         try:
             user = await page.app_state.auth.login(email=email, password=pwd)
-            await page.app_state.login(uid=user.uid, name=name)
+            await page.app_state.login(uid=user.uid)
         except Exception as e:
             set_login_status(FIREBASE_ERR_MSGS.get(str(e), f"エラー：{e}"), ft.Colors.RED)
 
@@ -82,7 +82,7 @@ def LoginView(page: TypedPage) -> ft.Control:
             set_login_status(FIREBASE_ERR_MSGS.get(str(ex), f"エラー：{ex}"), ft.Colors.RED)
         else:
             # 登録成功後、そのままログイン状態にしてダッシュボードへ
-            await page.app_state.login(uid, user_name)
+            await page.app_state.login(uid)
 
     return ft.Column([
         ft.Text("ログイン画面", size=30, weight=ft.FontWeight.BOLD),

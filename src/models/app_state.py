@@ -9,7 +9,7 @@ from constants import (
     HOME,
     LOGIN
 )
-from repositories import RepositoryManager, UserSettings
+from repositories import RepositoryManager
 from services import FirebaseAuth, Gist
 
 @dataclass
@@ -29,20 +29,21 @@ class AppState:
     def __post_init__(self):
         self.repos = RepositoryManager(self.db)
 
-    async def login(self, uid:str, name: str) -> None:
+    async def login(self, uid:str) -> int:
         self.is_logged_in = True
         self.user_id = uid
-        self.user_name = name
-        await ft.SharedPreferences().set(KEY_USER_NAME, name)
+        settings = await self.repos.user_settings_repo.fetch(uid)
+        self.user_name = settings.user_name
         await ft.SharedPreferences().set(KEY_USER_ID, uid)
         self.set_route(HOME)
+
+        return settings.alert_days
 
     async def logout(self) -> None:
         self.is_logged_in = False
         self.user_name = None
         self.user_id = None
         await ft.SharedPreferences().remove(KEY_USER_ID)
-        await ft.SharedPreferences().remove(KEY_USER_NAME)
         self.set_route(LOGIN)
 
     @property
@@ -54,7 +55,7 @@ class AppState:
         return (self.user_name == GUEST_USER_NAME)
 
     async def change_name(self, name: str):
-        # DBも更新
+        # DB更新
         await self.repos.user_settings_repo.rename_user(
             old_name=self.user_name,
             new_name=name,
@@ -62,8 +63,6 @@ class AppState:
         )
         #メモリ上のデータを更新
         self.user_name = name
-        # 永続化（SharedPreference）
-        await ft.SharedPreferences().set(KEY_USER_NAME, name)
 
     # すべての接続を安全に終了する
     async def close_all(self):

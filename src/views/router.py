@@ -32,7 +32,7 @@ from views import (
     SkillSettingsView,
     SettingsView,
     OCRView,
-     QCLog,
+    QCLog,
     NotFoundView
 )
 
@@ -49,6 +49,7 @@ def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist
             shared_gist=shared_gist,
             is_logged_in=False,
             set_route=set_route,
+            user_id="",
             user_name=""
         )
         page.on_disconnect = page.app_state.close_all
@@ -56,14 +57,10 @@ def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist
     async def initial_setup()-> None:
         #--- 前回のログインデータが残っているかチェック ---
         uid = await ft.SharedPreferences().get(KEY_USER_ID) # 前回のログインユーザーID
-        name = await ft.SharedPreferences().get(KEY_USER_NAME) # 前回のログインユーザー名
         alert_threshold = DEFAULT_ALERT_DAYS # gist有効期限警告の閾値
 
-        if name and uid: # ログインデータが残っているならそのデータでログイン
-            await page.app_state.login(uid, name)
-            # alert_thresholdを取得
-            settings = await page.app_state.repos.user_settings_repo.fetch(uid)
-            alert_threshold = settings.alert_days
+        if uid: # ログインデータが残っているならそのデータでログイン
+            alert_threshold = await page.app_state.login(uid)
         
         # --- gistの有効期限が近づいていたら，警告表示 ---
         if remaining_days <= alert_threshold:
