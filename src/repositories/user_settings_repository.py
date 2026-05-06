@@ -1,27 +1,31 @@
 from __future__ import annotations
+
 from google.cloud.firestore import (
+    AsyncClient,
     AsyncDocumentReference,
     AsyncWriteBatch,
-    AsyncClient,
-    Increment
+    Increment,
 )
 from google.cloud.firestore_v1.base_query import FieldFilter
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
 from constants import (
-    COL_USERS,
     COL_USERNAME_MAP,
+    COL_USERS,
     DEFAULT_ALERT_DAYS,
     DEFAULT_IS_QC_LOG_PUBLIC,
-    FIELD_USER_NAME,
-    FIELD_SKILLS_SETTINGS_NAME,
-    FIELD_INPUT_ZIP_FILE,
-    FIELD_EMAIL,
-    FIELD_TOTAL_QC_COUNT,
     FIELD_ALERT_DAYS,
+    FIELD_EMAIL,
+    FIELD_INPUT_ZIP_FILE,
     FIELD_IS_QC_LOG_PUBLIC,
-    FIELD_MAP_EMAIL
+    FIELD_MAP_EMAIL,
+    FIELD_SKILLS_SETTINGS_NAME,
+    FIELD_TOTAL_QC_COUNT,
+    FIELD_USER_NAME,
 )
+
 from .base_repository import BaseRepository
+
 
 # --- ユーザー設定を格納するクラス ---
 class UserSettings(BaseModel):
@@ -72,7 +76,7 @@ class UserSettingsRepository(BaseRepository[UserSettings]):
         return user_ref
     
     # is_qc_log_publicがTrueのユーザーのリストを取得
-    async def get_public_log_users(self):
+    async def get_public_log_users(self) -> list[tuple[str, str]]:
         users_ref = self.db.collection(COL_USERS)
         query = users_ref.where(filter=FieldFilter(FIELD_IS_QC_LOG_PUBLIC, '==', True))
     
