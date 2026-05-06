@@ -32,7 +32,7 @@ from views import (
     SkillSettingsView,
     SettingsView,
     OCRView,
-    QCLog,
+    QCLogView,
     NotFoundView
 )
 
@@ -115,5 +115,5 @@ ROUTES_MAP = {
     ROUTE_OCR: OCRView,
     ROUTE_SKILLS_SETTINGS: SkillSettingsView,
     SETTINGS: SettingsView,
-    ROUTE_QC_LOG: QCLog,
+    ROUTE_QC_LOG: QCLogView,
 }
