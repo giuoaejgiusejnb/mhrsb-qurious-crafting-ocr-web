@@ -1,6 +1,6 @@
 import calendar
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from zoneinfo import ZoneInfo
 
 import flet as ft
@@ -13,19 +13,19 @@ from repositories import QCLogs, QCStats, RepositoryManager
 @ft.observable
 @dataclass
 class QCLogStore:
-    repos: RepositoryManager = field(init=False)
-    target_uid: str = field(init=False)  # 履歴を表示するユーザーID
-    total: int = field(init=False)  # 履歴を表示するユーザーの総連整数
+    repos: RepositoryManager | None = None
+    target_uid: str | None = None  # 履歴を表示するユーザーID
+    total: int | None = None  # 履歴を表示するユーザーの総連整数
     # 履歴を表示するユーザーの月ごとのQCStats
     # [(year_month, qc_stats), ...]の形式
-    monthly_qc_stats: list[tuple[str, QCStats]] = field(init=False)
+    monthly_qc_stats: list[tuple[str, QCStats]] | None = None
     # 履歴を表示する月 = monthly_qc_stats[target_ym_idx][0]
-    target_ym_idx: int = field(init=False)
+    target_ym_idx: int | None = None
     # 表示する履歴
-    target_logs: list[QCLogs] = field(init=False)
+    target_logs: list[QCLogs] | None = None
     # 表示する履歴のキャッシュ
     # {"year_month":[qc_logs, ...], ...}の形式
-    _logs_cache: dict[str, list[QCLogs]] = field(init=False)
+    _logs_cache: dict[str, list[QCLogs]] | None = None
     # データ読み込み中
     is_loading: bool = True
 
@@ -61,11 +61,9 @@ class QCLogStore:
         self.is_loading = False
 
 
-qc_log_store = QCLogStore()
-
-
 @ft.component
 def QCLogView(page: TypedPage) -> ft.Control:
+    qc_log_store = ft.use_memo(lambda: QCLogStore(), [])
     # 初期化が終わったかどうか
     is_initialized, set_is_initialized = ft.use_state(False)
     # ログを表示するユーザーの(usr_id, user_name)のリスト
@@ -97,34 +95,33 @@ def QCLogView(page: TypedPage) -> ft.Control:
             content=LoadingScreen(msg="初期化中..."), on_mount=init_qc_view
         )
 
+    # --- どのユーザーの履歴を選択するかのドロップダウン ---
+    @ft.component
+    def UserDropdown(users_info: list[tuple[str, str]]) -> ft.Control:
+        user_options = [
+            ft.dropdown.Option(key=user_id, text=user_name)
+            for user_id, user_name in users_info
+        ]
+
+        return ft.Dropdown(
+            label="履歴を表示するユーザーを選択",
+            options=user_options,
+            on_select=lambda e: e.page.run_task(
+                qc_log_store.change_target_user, e.control.value
+            ),
+            width=300,
+        )
+
     return ft.Column(
         controls=[UserDropdown(users_info=users_info), MainContent(state=qc_log_store)],
         expand=True,
     )
 
 
-# --- どのユーザーの履歴を選択するかのドロップダウン ---
-@ft.component
-def UserDropdown(users_info: list[tuple[str, str]]) -> ft.Control:
-    user_options = [
-        ft.dropdown.Option(key=user_id, text=user_name)
-        for user_id, user_name in users_info
-    ]
-
-    return ft.Dropdown(
-        label="履歴を表示するユーザーを選択",
-        options=user_options,
-        on_select=lambda e: e.page.run_task(
-            qc_log_store.change_target_user, e.control.value
-        ),
-        width=300,
-    )
-
-
 @ft.component
 def MainContent(state: QCLogStore) -> ft.Control:
     # 表示するユーザーを選択していないなら何も表示しない
-    if not hasattr(state, "target_uid"):
+    if state.target_uid is None:
         return ft.Container()
     # ロード中ならロード画面を表示
     if state.is_loading:
