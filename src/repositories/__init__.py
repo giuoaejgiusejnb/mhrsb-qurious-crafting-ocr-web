@@ -1,4 +1,4 @@
-from .user_settings_repository import UserSettingsRepository, UserSettings
+from .qc_logs_repository import QCLogs, QCLogsRepository
+from .qc_stats_repository import QCStats, QCStatsRepository
 from .repository_manager import RepositoryManager
-from .qc_logs_repository import QCLogsRepository, QCLogs
-from .qc_stats_repository import QCStatsRepository, QCStats
+from .user_settings_repository import UserSettings, UserSettingsRepository
