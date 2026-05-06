@@ -1,13 +1,11 @@
+from typing import Awaitable, Callable
+
 import flet as ft
-from typing import Callable, Awaitable
+
 
 # ft.use_effectがなぜか使えないのでこれでdid_mountを使う
 class MountTrigger(ft.Container):
-    def __init__(
-            self, 
-            content: ft.Control, 
-            on_mount: Callable[[], Awaitable[None]]
-    ):
+    def __init__(self, content: ft.Control, on_mount: Callable[[], Awaitable[None]]):
         super().__init__()
         self.content = content
         self.on_mount = on_mount

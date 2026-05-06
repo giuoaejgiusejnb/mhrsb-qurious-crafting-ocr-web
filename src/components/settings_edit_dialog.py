@@ -1,7 +1,9 @@
 import flet as ft
-from .load_settings_dialog_base import LoadSettingsDialogBase
-from constants import FIELD_SKILLS
+
 from models.app_state import TypedPage
+
+from .load_settings_dialog_base import LoadSettingsDialogBase
+
 
 class SettingsEditDialog(LoadSettingsDialogBase):
     def __init__(self, page: TypedPage, on_load: callable):

@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
+
 from google.cloud.firestore import AsyncClient
-from .user_settings_repository import UserSettingsRepository
-from .qc_settings_repository import QCSettingsRepository
+
 from .qc_logs_repository import QCLogsRepository
+from .qc_settings_repository import QCSettingsRepository
 from .qc_stats_repository import QCStatsRepository
+from .user_settings_repository import UserSettingsRepository
+
 
 @dataclass
 class RepositoryManager:

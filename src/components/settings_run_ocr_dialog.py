@@ -1,4 +1,3 @@
-from constants import FIELD_SKILLS_SETTINGS_NAME
 from .load_settings_dialog_base import LoadSettingsDialogBase
 from models.app_state import TypedPage
 from repositories import UserSettings

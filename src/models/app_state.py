@@ -1,16 +1,13 @@
-import flet as ft
-from dataclasses import dataclass, field
 from collections.abc import Callable
+from dataclasses import dataclass, field
+
+import flet as ft
 from google.cloud.firestore import AsyncClient
-from constants import (
-    GUEST_USER_NAME,
-    KEY_USER_NAME,
-    KEY_USER_ID,
-    HOME,
-    LOGIN
-)
+
+from constants import GUEST_USER_NAME, HOME, KEY_USER_ID, LOGIN
 from repositories import RepositoryManager
 from services import FirebaseAuth, Gist
+
 
 @dataclass
 class AppState:
@@ -22,14 +19,14 @@ class AppState:
     set_route: Callable[[str], None]
     user_id: str | None = None
     user_name: str | None = None
-    
+
     # --- リポジトリ ---
     repos: RepositoryManager = field(init=False)
 
     def __post_init__(self):
         self.repos = RepositoryManager(self.db)
 
-    async def login(self, uid:str) -> int:
+    async def login(self, uid: str) -> int:
         self.is_logged_in = True
         self.user_id = uid
         settings = await self.repos.user_settings_repo.fetch(uid)
@@ -52,16 +49,14 @@ class AppState:
 
     @property
     def is_guest(self) -> bool:
-        return (self.user_name == GUEST_USER_NAME)
+        return self.user_name == GUEST_USER_NAME
 
     async def change_name(self, name: str):
         # DB更新
         await self.repos.user_settings_repo.rename_user(
-            old_name=self.user_name,
-            new_name=name,
-            user_id=self.user_id
+            old_name=self.user_name, new_name=name, user_id=self.user_id
         )
-        #メモリ上のデータを更新
+        # メモリ上のデータを更新
         self.user_name = name
 
     # すべての接続を安全に終了する
@@ -69,6 +64,7 @@ class AppState:
         await self.auth.close()
         await self.db.close()
         await self.shared_gist.close()
+
 
 # page.app_stateをAppState型だと認識するために定義
 class TypedPage(ft.Page):

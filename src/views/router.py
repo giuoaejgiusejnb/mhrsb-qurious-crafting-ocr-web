@@ -2,42 +2,44 @@
 
 import flet as ft
 from google.cloud.firestore import AsyncClient
+
+from components import LoadingScreen
 from constants import (
-    HOME,
-    ROUTE_SKILLS_SETTINGS,
-    LOGIN,
-    ROUTE_OCR,
-    SETTINGS,
-    ROUTE_QC_LOG,
-    KEY_USER_NAME,
-    KEY_USER_ID,
-    PAGE_TITLES,
-    UI_TITLES,
     DEFAULT_ALERT_DAYS,
     DEFAULT_PAGE_TITLE,
-    DEFAULT_UI_TITLE
+    DEFAULT_UI_TITLE,
+    HOME,
+    KEY_USER_ID,
+    LOGIN,
+    PAGE_TITLES,
+    ROUTE_OCR,
+    ROUTE_QC_LOG,
+    ROUTE_SKILLS_SETTINGS,
+    SETTINGS,
+    UI_TITLES,
 )
-from components import LoadingScreen
-from models.app_state import (
-    AppState,
-    TypedPage
-)
-from services import (
-    FirebaseAuth,
-    Gist
-)
+from models.app_state import AppState, TypedPage
+from services import FirebaseAuth, Gist
 from views import (
     HomeView,
     LoginView,
-    SkillSettingsView,
-    SettingsView,
+    NotFoundView,
     OCRView,
     QCLogView,
-    NotFoundView
+    SettingsView,
+    SkillSettingsView,
 )
 
+
 @ft.component
-def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist, remaining_days: int, exp_str: str) -> ft.Control:
+def Root(
+    page: TypedPage,
+    auth: FirebaseAuth,
+    db: AsyncClient,
+    shared_gist: Gist,
+    remaining_days: int,
+    exp_str: str,
+) -> ft.Control:
     is_loading, set_is_loading = ft.use_state(True)
     route, set_route = ft.use_state(HOME)
 
@@ -50,27 +52,28 @@ def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist
             is_logged_in=False,
             set_route=set_route,
             user_id="",
-            user_name=""
+            user_name="",
         )
         page.on_disconnect = page.app_state.close_all
 
-    async def initial_setup()-> None:
-        #--- 前回のログインデータが残っているかチェック ---
-        uid = await ft.SharedPreferences().get(KEY_USER_ID) # 前回のログインユーザーID
-        alert_threshold = DEFAULT_ALERT_DAYS # gist有効期限警告の閾値
+    async def initial_setup() -> None:
+        # --- 前回のログインデータが残っているかチェック ---
+        uid = await ft.SharedPreferences().get(KEY_USER_ID)  # 前回のログインユーザーID
+        alert_threshold = DEFAULT_ALERT_DAYS  # gist有効期限警告の閾値
 
-        if uid: # ログインデータが残っているならそのデータでログイン
+        if uid:  # ログインデータが残っているならそのデータでログイン
             alert_threshold = await page.app_state.login(uid)
-        
+
         # --- gistの有効期限が近づいていたら，警告表示 ---
         if remaining_days <= alert_threshold:
             expiration_warning_text = f"このwebアプリは{exp_str}に使用できなくなります．アプリ作成者に連絡して有効期限を延ばしてください"
-            page.show_dialog(ft.SnackBar(
-                ft.Text(expiration_warning_text),
-                persist=True,
-                action="ok",
-                behavior=ft.SnackBarBehavior.FLOATING,
-                margin=ft.Margin.only(bottom=300, left=20, right=20)
+            page.show_dialog(
+                ft.SnackBar(
+                    ft.Text(expiration_warning_text),
+                    persist=True,
+                    action="ok",
+                    behavior=ft.SnackBarBehavior.FLOATING,
+                    margin=ft.Margin.only(bottom=300, left=20, right=20),
                 )
             )
 
@@ -87,15 +90,15 @@ def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist
     if not page.app_state.is_authenticated and route != LOGIN:
         page.app_state.set_route(LOGIN)
 
-    #--- UI構築 ---
+    # --- UI構築 ---
     page.route = route
-    page.title  = PAGE_TITLES.get(route, DEFAULT_PAGE_TITLE)
+    page.title = PAGE_TITLES.get(route, DEFAULT_PAGE_TITLE)
     page.appbar = ft.AppBar(
         leading=ft.IconButton(
             icon=ft.Icons.ARROW_BACK,
             tooltip="ホームへ戻る",
             on_click=lambda _: set_route(HOME),
-            disabled= (route == HOME)
+            disabled=(route == HOME),
         ),
         leading_width=40,
         title=UI_TITLES.get(route, DEFAULT_UI_TITLE),
@@ -107,6 +110,7 @@ def Root(page: TypedPage, auth: FirebaseAuth, db: AsyncClient, shared_gist: Gist
         return ROUTES_MAP.get(route, NotFoundView)(page)
     except Exception as e:
         return ft.Text(f"Error loading view for route '{route}': {e}")
+
 
 # ルートとView関数のマッピング
 ROUTES_MAP = {
