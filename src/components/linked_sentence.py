@@ -2,6 +2,7 @@ import asyncio
 import os
 import platform
 import subprocess
+from functools import partial
 
 import flet as ft
 
@@ -30,9 +31,9 @@ class LinkedSentence(ft.Row):
                 # 文字列（URLやパス）か、関数（コールバック）かを自動判別
                 if isinstance(action, str):
                     # 文字列ならクラスメソッドを呼ぶようにラップする
-                    # ※引数 u=action とすることでループ内での値の固定を行う
-                    def on_click_func(e, u=action):
-                        return LinkedSentence.open_content(e, u)
+                    on_click_func = partial(
+                        LinkedSentence.open_content, path_or_url=action
+                    )
                 else:
                     on_click_func = action
 
