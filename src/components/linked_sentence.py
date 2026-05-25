@@ -31,9 +31,8 @@ class LinkedSentence(ft.Row):
                 if isinstance(action, str):
                     # 文字列ならクラスメソッドを呼ぶようにラップする
                     # ※引数 u=action とすることでループ内での値の固定を行う
-                    on_click_func = lambda e, u=action: LinkedSentence.open_content(
-                        e, u
-                    )
+                    def on_click_func(e, u=action):
+                        return LinkedSentence.open_content(e, u)
                 else:
                     on_click_func = action
 
