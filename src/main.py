@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 import flet as ft
 import flet.fastapi as flet_fastapi
-from fastapi import Body, FastAPI
+from fastapi import Body, FastAPI, Response
 
 from components import LoadingScreen
 from constants import (
@@ -123,6 +123,33 @@ async def receive_data(payload: dict = Body(...)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+# androidのキャッシュを消す
+@app.get("/flutter_service_worker.js")
+async def disable_service_worker():
+    # Android端末に残っている古いキャッシュを全削除し、Service Worker自体を登録解除するスクリプト
+    cleanup_script = """
+    self.addEventListener('install', (e) => {
+        self.skipWaiting(); // 待機せずに即座にアクティブ化
+    });
+
+    self.addEventListener('activate', (e) => {
+        e.waitUntil(
+            caches.keys().then((keys) => {
+                // 1. 溜まっているキャッシュをすべて削除
+                return Promise.all(keys.map((key) => caches.delete(key)));
+            }).then(() => {
+                // 2. 自分自身（Service Worker）の登録を解除して消え去る
+                return self.registration.unregister();
+            }).then(() => {
+                // 3. 制御しているタブやページを解放
+                return self.clients.claim();
+            })
+        );
+    });
+    """
+    return Response(content=cleanup_script, media_type="application/javascript")
 
 
 app.mount("/", flet_fastapi.app(main))

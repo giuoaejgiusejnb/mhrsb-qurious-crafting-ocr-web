@@ -23,6 +23,10 @@ kill_timeout = '10s' # 少し余裕を持たせる
 
   [http_service.http_options.response.headers]
     Referrer-Policy = "no-referrer-when-downgrade"
+    # androidだとキャッシュのせいでサイトが表示されないことがあるのでその対策
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
 
 # 起動が遅いアプリ（Firebase読み込みなど）のためにチェックを緩める
 [[http_service.checks]]
