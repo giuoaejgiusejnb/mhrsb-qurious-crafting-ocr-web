@@ -1,3 +1,5 @@
+import asyncio
+
 import flet as ft
 
 from models.app_state import TypedPage
@@ -23,6 +25,8 @@ class SettingsEditDialog(LoadSettingsDialogBase):
 
         # 二つのダイアログを消す
         self.page.pop_dialog()
+        # Web版におけるダイアログ連続pop時の挙動バグを回避するためのウェイト
+        await asyncio.sleep(0.1)
         self.page.pop_dialog()
 
         # スナックバーを表示
