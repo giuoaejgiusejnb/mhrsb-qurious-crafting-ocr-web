@@ -1,3 +1,5 @@
+import asyncio
+
 import flet as ft
 
 from models.app_state import TypedPage
@@ -99,6 +101,8 @@ class SaveSettingsDialog(ft.AlertDialog):
 
         self.page.pop_dialog()  # 保存ダイアログを閉じる
         if overwrite_mode:
+            # Web版におけるダイアログ連続pop時の挙動バグを回避するためのウェイト
+            await asyncio.sleep(0.1)
             self.page.pop_dialog()  # 上書き確認ダイアログも閉じる
 
         # スナックバー表示とページ更新
