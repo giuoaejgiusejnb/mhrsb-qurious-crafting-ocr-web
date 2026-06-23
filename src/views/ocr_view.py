@@ -81,6 +81,7 @@ def OCRView(page: TypedPage) -> ft.Control:
         value=input_zip_file,
         on_change=lambda e: set_input_zip_file(e.control.value),
         on_blur=save_input_zip_file,
+        expand=True,
     )
 
     # osごとに無圧縮する方法を表示するダイアログ
@@ -182,14 +183,34 @@ def OCRView(page: TypedPage) -> ft.Control:
 
     input_zip_file_controls = (
         input_zip_file_field_label,
-        ft.Row(controls=[input_zip_file_field, zip_instruction_text]),
+        ft.ResponsiveRow(
+            [
+                ft.Container(
+                    input_zip_file_field,
+                    col={
+                        ft.ResponsiveRowBreakpoint.XS: 12,  # スマホ画面では12カラム分（100%の幅）
+                        ft.ResponsiveRowBreakpoint.MD: 6,  # タブレット画面では6カラム分（50%の幅）
+                        ft.ResponsiveRowBreakpoint.LG: 6,  # PC画面では6カラム分（50%の幅）
+                    },
+                ),
+                ft.Container(
+                    zip_instruction_text,
+                    col={
+                        ft.ResponsiveRowBreakpoint.XS: 12,
+                        ft.ResponsiveRowBreakpoint.MD: 6,
+                        ft.ResponsiveRowBreakpoint.LG: 6,
+                    },
+                ),
+            ]
+        ),
     )
 
     # --- DBに保存してある設定名を選択し，その設定名を表示するコントロールを定義 ---
 
     settings_selection_row_label = "欲しいスキル設定を選択してください．"
 
-    settings_selection_row = ft.Row(
+    settings_selection_row = ft.ResponsiveRow(
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,  # 上下中央揃えにする
         controls=[
             ft.Button(
                 content="欲しいスキル設定を選択してください",
@@ -197,8 +218,22 @@ def OCRView(page: TypedPage) -> ft.Control:
                 on_click=lambda _: page.show_dialog(
                     SettingsRunOCRDialog(page=page, on_load=set_settings_name)
                 ),
+                col={
+                    ft.ResponsiveRowBreakpoint.XS: 12,
+                    ft.ResponsiveRowBreakpoint.MD: 8,
+                    ft.ResponsiveRowBreakpoint.LG: 8,
+                },
             ),
-            ft.Text(settings_name, size=12),
+            ft.Text(
+                settings_name,
+                size=12,
+                expand=True,
+                col={
+                    ft.ResponsiveRowBreakpoint.XS: 2,
+                    ft.ResponsiveRowBreakpoint.MD: 1,
+                    ft.ResponsiveRowBreakpoint.LG: 1,
+                },
+            ),
             ft.IconButton(
                 tooltip="詳細を表示",
                 icon=ft.Icons.INFO_OUTLINE,
@@ -206,10 +241,13 @@ def OCRView(page: TypedPage) -> ft.Control:
                 on_click=lambda e: e.page.show_dialog(
                     DetailDialog(page=page, settings_name=settings_name)
                 ),
+                col={
+                    ft.ResponsiveRowBreakpoint.XS: 2,
+                    ft.ResponsiveRowBreakpoint.MD: 1,
+                    ft.ResponsiveRowBreakpoint.LG: 1,
+                },
             ),
         ],
-        scroll=ft.ScrollMode.ADAPTIVE,
-        expand=True,
     )
 
     settings_selection_controls = (settings_selection_row_label, settings_selection_row)
