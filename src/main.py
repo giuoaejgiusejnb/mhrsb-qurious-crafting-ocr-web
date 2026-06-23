@@ -50,6 +50,9 @@ async def main(page: ft.Page):
         # ロード画面消去
         page.clean()
 
+        # ページ全体をライトモード（白背景）に設定（ダークモードは見にくいので）
+        page.theme_mode = ft.ThemeMode.LIGHT
+
         # スクロールバーの定義
         page.theme = ft.Theme(
             scrollbar_theme=ft.ScrollbarTheme(
