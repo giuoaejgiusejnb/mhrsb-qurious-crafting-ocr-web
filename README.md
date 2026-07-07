@@ -14,7 +14,7 @@
 
 OCRの検証に使用できるテスト用のスクリーンショット画像一式です。
 
-- **[テスト用画像をダウンロードする (ZIP: 20MB)]([https://github.com](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip))**
+- **[テスト用画像をダウンロードする（20MB）](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip)**
 
 ---
 
