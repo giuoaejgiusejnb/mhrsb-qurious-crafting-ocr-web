@@ -4,7 +4,7 @@
 
 ## 🚀 デモ
 
-[アプリを開く (Demo)](https://flet-app-mhrsb-ocr.fly.dev/)
+[アプリを開く (Demo)](https://fly.dev)
 - **テスト用ユーザー名:** `aaaa`
 - **テスト用パスワード:** `123456`
 
@@ -14,23 +14,31 @@
 
 OCRの検証に使用できるテスト用のスクリーンショット画像一式です。
 
-- **[テスト用画像をダウンロードする (ZIP: 20MB)](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip)**
+- **[テスト用画像をダウンロードする (ZIP: 20MB)](https://github.com)**
 
 ---
 
 ## ✨ 機能
 
 - 📸 **画像OCR読み取り:** スクリーンショットから傀異錬成の結果を自動認識
-- 📊 **データ化:** 読み取った錬成結果を構造化データとして保存
+- 🎯 **ターゲットスキル判定:** 事前に選択した「欲しいスキル」が**少なくとも1つ含まれる画像のみ**を自動で判別して画面に出力
 - 💻 **Web UI:** Fletによる直感的で軽量なWebインターフェース
 
 ---
 
-## 🛠️ 実行方法（ローカル）
+## 🛠️ 使い方
+
+1. **欲しいスキルの選択**: 画面上で狙っているスキルを事前に選択します。
+2. **画像のアップロード**: 錬成結果のスクリーンショット（複数可）を読み込ませます。
+3. **自動判定・出力**: OCRで画像内のスキルを認識し、条件にマッチした「当たり画像」のみが画面に出力されます。
+
+---
+
+## 💻 実行方法（ローカル）
 
 ### 1. リポジトリをクローン
 ```bash
-git clone https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web.git
+git clone https://github.com
 cd mhrsb-qurious-crafting-ocr-web
 ```
 
