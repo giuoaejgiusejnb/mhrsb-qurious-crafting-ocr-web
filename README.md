@@ -3,6 +3,10 @@
 [アプリを開く (Demo)](https://flet-app-mhrsb-ocr.fly.dev/)
 *(テスト用ログイン情報 ── ユーザー名: `aaaa` / パスワード: `123456`)*
 
+## テストデータのダウンロード
+
+[テスト用画像をダウンロードする（20MB）](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip)
+
 モンスターハンターライズ：サンブレイク（MHR:SB）の「傀異錬成（Qurious Crafting）」の結果をOCRで読み取るFlet Webアプリです。
 
 ## 機能
