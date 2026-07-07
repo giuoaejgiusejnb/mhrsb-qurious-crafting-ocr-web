@@ -2,33 +2,51 @@
 
 モンスターハンターライズ：サンブレイク（MHR:SB）の「傀異錬成（Qurious Crafting）」の結果をOCRで読み取るFlet Webアプリです。
 
+## 🚀 デモ
+
 [アプリを開く (Demo)](https://flet-app-mhrsb-ocr.fly.dev/)
-*(テスト用ログイン情報 ── ユーザー名: `aaaa` / パスワード: `123456`)*
+- **テスト用ユーザー名:** `aaaa`
+- **テスト用パスワード:** `123456`
 
-## テストデータのダウンロード
+---
 
-[テスト用画像をダウンロードする（20MB）](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip)
+## 💾 テストデータのダウンロード
 
-## 機能
-- スクリーンショット画像からのOCR読み取り
-- 錬成結果のデータ化
-- FletによるWebインターフェース
+OCRの検証に使用できるテスト用のスクリーンショット画像一式です。
 
-## 実行方法（ローカル）
+- **[テスト用画像をダウンロードする (ZIP: 20MB)](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip)**
 
-1. **リポジトリをクローン**
-   ```bash
-   git clone https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web.git
-   cd mhrsb-qurious-crafting-ocr-web
+---
 
-2. **依存ライブラリのインストール**
-    ```bash
-    pip install -r requirements.txt
+## ✨ 機能
 
-3. **アプリの起動**
-    ```bash
-    flet run src/main.py
+- 📸 **画像OCR読み取り:** スクリーンショットから傀異錬成の結果を自動認識
+- 📊 **データ化:** 読み取った錬成結果を構造化データとして保存
+- 💻 **Web UI:** Fletによる直感的で軽量なWebインターフェース
 
-## 使用技術
+---
+
+## 🛠️ 実行方法（ローカル）
+
+### 1. リポジトリをクローン
+```bash
+git clone https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web.git
+cd mhrsb-qurious-crafting-ocr-web
+```
+
+### 2. 依存ライブラリのインストール
+```bash
+pip install -r requirements.txt
+```
+
+### 3. アプリの起動
+```bash
+flet run src/main.py
+```
+
+---
+
+## 🧰 使用技術
+
 - **Flet** (Python-based Flutter framework)
 - **Python 3.x**
