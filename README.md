@@ -4,7 +4,7 @@
 
 ## 🚀 デモ
 
-[アプリを開く (Demo)](https://fly.dev)
+[アプリを開く (Demo)](https://flet-app-mhrsb-ocr.fly.dev/)
 - **テスト用ユーザー名:** `aaaa`
 - **テスト用パスワード:** `123456`
 
@@ -14,7 +14,7 @@
 
 OCRの検証に使用できるテスト用のスクリーンショット画像一式です。
 
-- **[テスト用画像をダウンロードする (ZIP: 20MB)](https://github.com)**
+- **[テスト用画像をダウンロードする (ZIP: 20MB)]([https://github.com](https://github.com/giuoaejgiusejnb/mhrsb-qurious-crafting-ocr-web/raw/refs/heads/main/tests/data/ocr_test.zip))**
 
 ---
 
